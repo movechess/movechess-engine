@@ -1,0 +1,46 @@
+import bcrypt from "bcrypt";
+import Chess from "../engine/chess";
+import { dbCollection } from "../database/collection";
+
+export type TGame = {
+  game_id: string;
+  player_1: string;
+  player_2: string;
+  board: any;
+  score: any;
+  turn_player: string;
+  move_number: number;
+};
+
+export const gameController = {
+  newGame: async (req, res) => {
+    console.log("7s:new-game:body", req.params);
+    const { browser_id } = req.params;
+    let id = null;
+    if (!browser_id) {
+      id = await bcrypt.hash(new Date().getTime().toString(), 8);
+    }
+    const chess = new Chess();
+
+    const board = {
+      game_id: id,
+      player_1: "",
+      player_2: "",
+      board: chess.getBoard(),
+      score: chess.initialScore(),
+      turn_player: "",
+      move_number: 0,
+    };
+
+    const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
+    console.log("7s200:new-game:name", collection.dbName, collection.collectionName);
+
+    const insert = await collection.insertOne(board);
+    console.log("7s200:new-game:insert", insert);
+
+    return res.json({ board });
+  },
+  loadGame: async (req, res) => {},
+  legalMoves: async (req, res) => {},
+  makeMove: async (req, res) => {},
+};
