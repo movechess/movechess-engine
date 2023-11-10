@@ -15,9 +15,9 @@ export type TGame = {
 export const gameController = {
   newGame: async (req, res) => {
     console.log("7s:new-game:body", req.params);
-    const { browser_id } = req.params;
+    const { game_id } = req.params;
     let id = null;
-    if (!browser_id) {
+    if (!game_id) {
       id = await bcrypt.hash(new Date().getTime().toString(), 8);
     }
     const chess = new Chess();
@@ -40,7 +40,23 @@ export const gameController = {
 
     return res.json({ board });
   },
+
   loadGame: async (req, res) => {},
-  legalMoves: async (req, res) => {},
+
+  legalMoves: async (req, res) => {
+    const { position, gameId } = req.params;
+    const query = { game_id: gameId };
+
+    const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
+    const board = await collection.findOne(query);
+    const chess = new Chess(board.board);
+    const square = chess.getBoard()[position];
+
+    if (!square) {
+      return res.status(400).json({ error: "Invalid position!" });
+    }
+    return res.json(chess.getLegalMoves(square.color, square.piece, position));
+  },
+
   makeMove: async (req, res) => {},
 };
