@@ -242,7 +242,10 @@ class Chess {
   move(playerColor, from, to) {
     const square = this.board[from];
     if (square.color && square.color === playerColor) {
+      console.log("-> engine:move:", square.piece);
       if (this.checkMove(playerColor, square.piece, from, to)) {
+        console.log("-> engine:move:", 2);
+
         let flag = "-"; // normal movement
         if (this.board[to].color) {
           if (this.board[to].color !== playerColor) {

@@ -49,7 +49,9 @@ export const gameController = {
 
     const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
     const board = await collection.findOne(query);
+
     const chess = new Chess(board.board);
+
     const square = chess.getBoard()[position];
 
     if (!square) {
@@ -58,5 +60,69 @@ export const gameController = {
     return res.json(chess.getLegalMoves(square.color, square.piece, position));
   },
 
-  makeMove: async (req, res) => {},
+  makeMove: async (req, res) => {
+    const { game_id } = req.body;
+    const { from, to } = req.params;
+
+    const query = { game_id: game_id };
+
+    const { collection: gameCollection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
+    const game = await gameCollection.findOne(query);
+
+    const chess = new Chess(game.board);
+
+    const squareFrom = game.board[from];
+    const squareTo = game.board[to];
+    // console.log("7s200:square", from, squareFrom, to, squareTo);
+
+    if (squareFrom && squareTo) {
+      const moved = chess.move(squareFrom.color, from, to);
+      if (moved) {
+        const { move_number, turn_player, score } = game;
+
+        if (moved === "x") {
+          score[squareFrom.color][squareTo.piece] += 1;
+        }
+
+        const newBoard = {
+          game_id: game_id,
+          move_number: move_number + 1,
+          turn_player: turn_player && turn_player === "W" ? "B" : "W",
+          score: score,
+          board: chess.getBoard(),
+        };
+
+        const updateDoc = {
+          $set: {
+            move_number: newBoard.move_number,
+            turn_player: newBoard.turn_player,
+            score: newBoard.score,
+            board: newBoard.board,
+          },
+        };
+        const updateGame = await gameCollection.updateOne(query, updateDoc);
+        console.log("7s200:move:updateDocs", updateGame);
+
+        const move = {
+          game_id: game_id,
+          player: newBoard.turn_player,
+          flag: moved,
+          move_number: newBoard.move_number,
+          from,
+          to,
+          piece: squareFrom.piece,
+        };
+
+        const { collection: moveCollection } = await dbCollection<any>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_MOVES!);
+        const insert = await moveCollection.insertOne(move);
+        console.log("7s200:move:insert", insert);
+
+        return res.json({ board: newBoard, move });
+      }
+      return res.status(400).json({ error: "Invalid move!" });
+    }
+    return res.status(400).json({ error: "Invalid position" });
+
+    // const chess = new Chess(req.board);
+  },
 };
