@@ -125,4 +125,8 @@ export const gameController = {
 
     // const chess = new Chess(req.board);
   },
+  // V1
+
+  // V2 chess2.ts
+  // create game - make move
 };
