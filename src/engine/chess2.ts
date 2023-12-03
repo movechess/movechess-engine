@@ -561,6 +561,7 @@ export class Chess {
   }
 
   private _trimFen(fen: string): string {
+    console.log("7s200:fen", fen);
     // remove last two fields in FEN string as they're not needed when checking for repetition
     return fen.split(" ").slice(0, 4).join(" ");
   }

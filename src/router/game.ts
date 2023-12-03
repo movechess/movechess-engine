@@ -4,6 +4,13 @@ import { dbCollection } from "../database/collection";
 import { Chess as ChessV2 } from "../engine/chess2";
 import md5 from "md5";
 
+// [TO-DO]
+// Connect subwallet
+// Auth subwallet jwt
+// Socket
+// Click to move
+// Check game status (draw, over)
+
 export type TGame = {
   game_id: string;
   player_1: string;
@@ -145,6 +152,7 @@ export const gameController = {
       score: 0,
       turn_player: chess.turn(),
       move_number: chess.moveNumber(),
+      fen: chess.fen(),
     };
 
     const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
@@ -153,4 +161,16 @@ export const gameController = {
 
     res.json({ board });
   },
+
+  loadGameV2: async (req, res) => {
+    const { game_id } = req.query;
+    const query = { game_id: game_id };
+
+    const { collection: gameCollection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
+    const game = await gameCollection.findOne(query);
+
+    res.json({ game });
+  },
+
+  makeMoveV2: async (req, res) => {},
 };
