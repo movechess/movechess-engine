@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import Chess from "../engine/chess";
 import { dbCollection } from "../database/collection";
+import { Chess as ChessV2 } from "../engine/chess2";
+import md5 from "md5";
 
 export type TGame = {
   game_id: string;
@@ -128,5 +130,27 @@ export const gameController = {
   // V1
 
   // V2 chess2.ts
-  // create game - make move
+  // create game
+  newGameV2: async (req, res) => {
+    const time = Date.now();
+    const id = md5(time);
+
+    const chess = new ChessV2();
+
+    const board = {
+      game_id: id,
+      player_1: "",
+      player_2: "",
+      board: chess.board(),
+      score: 0,
+      turn_player: chess.turn(),
+      move_number: chess.moveNumber(),
+    };
+
+    const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
+    const insert = await collection.insertOne(board);
+    console.log("7s200:new-game:insert", insert);
+
+    res.json({ board });
+  },
 };

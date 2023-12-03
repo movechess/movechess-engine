@@ -7,4 +7,6 @@ routes.post("/new-game", gameController.newGame);
 routes.get("/legal-moves/:gameId/:position", gameController.legalMoves);
 routes.post("/make-move/:from/:to", gameController.makeMove);
 
+routes.post("/new-game-v2", gameController.newGameV2);
+
 export default routes;
