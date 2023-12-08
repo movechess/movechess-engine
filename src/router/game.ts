@@ -4,13 +4,6 @@ import { dbCollection } from "../database/collection";
 import { Chess as ChessV2 } from "../engine/chess2";
 import md5 from "md5";
 
-// [TO-DO]
-// Connect subwallet
-// Auth subwallet jwt
-// Socket
-// Click to move
-// Check game status (draw, over)
-
 export type TGame = {
   game_id: string;
   player_1: string;
@@ -19,6 +12,7 @@ export type TGame = {
   score: any;
   turn_player: string;
   move_number: number;
+  fen: string;
 };
 
 export const gameController = {
@@ -39,6 +33,7 @@ export const gameController = {
       score: chess.initialScore(),
       turn_player: "",
       move_number: 0,
+      fen: "",
     };
 
     const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
@@ -164,12 +159,19 @@ export const gameController = {
 
   loadGameV2: async (req, res) => {
     const { game_id } = req.query;
+    console.log("7s200:game", game_id);
     const query = { game_id: game_id };
 
     const { collection: gameCollection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
     const game = await gameCollection.findOne(query);
 
     res.json({ game });
+  },
+
+  getGamesV2: async (req, res) => {
+    const { collection: gameCollection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
+    const games = await gameCollection.find().toArray();
+    res.json({ status: 200, games });
   },
 
   makeMoveV2: async (req, res) => {},
