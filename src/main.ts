@@ -10,7 +10,7 @@ import jwt from "jsonwebtoken";
 import { dbCollection } from "./database/collection";
 import md5 from "md5";
 import { Chess, Chess as ChessV2, Square } from "./engine/chess2";
-import { TGame, getGasLimit, keyring } from "./router/game";
+import { TGame, gameController, getGasLimit, keyring } from "./router/game";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { ContractPromise } from "@polkadot/api-contract";
 import abi from "./abi/movechesscontract.json";
@@ -23,10 +23,15 @@ import cors from "cors";
   app.use(express.json());
   app.use(bodyParser.urlencoded({ extended: false }));
 
+  let corsOptions = {
+    origin: ["http://localhost:3000", "https://www.client.movechess.com"],
+  };
+
   app.get("/ping", (req, res) => {
-    res.json("pong 6");
+    res.json("pong 7");
   });
-  app.use("/", routes);
+  app.get("/get-game-V2", cors(corsOptions), gameController.getGamesV2);
+  app.use("/", cors(corsOptions), routes);
 
   await client.connect().catch((err) => console.log("7s200:err", err));
   client.on("close", () => {
