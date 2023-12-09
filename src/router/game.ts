@@ -26,7 +26,7 @@ export type TGame = {
   fen: string;
 };
 
-const keyring = new Keyring({ type: "sr25519" });
+export const keyring = new Keyring({ type: "sr25519" });
 const DEFAULT_0X0_ADDRESS = "5HrN7fHLXWcFiXPwwtq2EkSGns9eMt5P7SpeTPewumZy6ftb";
 
 export const gameController = {
@@ -148,7 +148,7 @@ export const gameController = {
   // V2 chess2.ts
   // create game
   newGameV2: async (req, res) => {
-    const { isPaymentMatch } = req.body.params;
+    const { isPaymentMatch, gameIndex } = req.body.params;
 
     const time = Date.now();
     const id = md5(time);
@@ -167,7 +167,8 @@ export const gameController = {
       isPaymentMatch: isPaymentMatch,
       payAmount: 10_000_000_000_000,
       pays: {
-        player1: 0,
+        gameIndex: gameIndex ? gameIndex : null,
+        player1: isPaymentMatch ? 10_000_000_000_000 : 0,
         player2: 0,
       },
     };
@@ -198,121 +199,71 @@ export const gameController = {
   makeMoveV2: async (req, res) => {},
 
   updateWinnerV2: async (req, res) => {
-    const { winner } = req.body;
-    const provider = new WsProvider("wss://ws.test.azero.dev");
-    const api = new ApiPromise({
-      provider,
-      rpc: jsonrpc,
-      types: {
-        ContractsPsp34Id: {
-          _enum: {
-            U8: "u8",
-            U16: "u16",
-            U32: "u32",
-            U64: "u64",
-            U128: "u128",
-            Bytes: "Vec<u8>",
+    const { game_id } = req.body.params;
+    const query = { game_id: game_id };
+    console.log("7s200:qeury", query);
+    const { collection: gameCollection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
+    const game = await gameCollection.findOne(query);
+    if ((game as any).isPaymentMatch) {
+      const chess = new ChessV2(game.fen);
+
+      if ((game as any).isGameOver || (game as any).isGameDraw) {
+        const provider = new WsProvider("wss://ws.test.azero.dev");
+        const api = new ApiPromise({
+          provider,
+          rpc: jsonrpc,
+          types: {
+            ContractsPsp34Id: {
+              _enum: {
+                U8: "u8",
+                U16: "u16",
+                U32: "u32",
+                U64: "u64",
+                U128: "u128",
+                Bytes: "Vec<u8>",
+              },
+            },
           },
-        },
-      },
-    });
-    api.on("connected", async () => {
-      api.isReady.then((api) => {
-        console.log("Smartnet AZERO Connected");
-      });
-    });
-    api.on("ready", async () => {
-      const contract = new ContractPromise(api, abi, "5CRDBTruY3hLTCQmn7MTnULpL3ALXLMEUWLDa826hyFftKkK");
-      console.log("Collection Contract is ready");
-      const PHRASE = "provide toy deposit expect popular mesh undo resist jazz pizza wolf churn";
-      const newPair = keyring.addFromUri(PHRASE);
+        });
+        api.on("connected", async () => {
+          api.isReady.then((api) => {
+            console.log("Smartnet AZERO Connected");
+          });
+        });
+        api.on("ready", async () => {
+          const contract = new ContractPromise(api, abi, "5CRDBTruY3hLTCQmn7MTnULpL3ALXLMEUWLDa826hyFftKkK");
+          console.log("Collection Contract is ready");
+          const PHRASE = "provide toy deposit expect popular mesh undo resist jazz pizza wolf churn";
+          const newPair = keyring.addFromUri(PHRASE);
+          console.log("7s00:", (game as any).pays, chess.turn() === "w" ? 1 : 0);
+          const gasLimitResult = await getGasLimit(contract.api, newPair.address, "updateWinner", contract, {}, [(game as any).pays.gameIndex, chess.turn() === "w" ? 1 : 0]);
+          const { value: gasLimit } = gasLimitResult;
 
-      const gasLimitResult = await getGasLimit(contract.api, newPair.address, "updateWinner", contract, {}, [2, 1]);
-      const { value: gasLimit } = gasLimitResult;
-      console.log("7s200:gas", gasLimit);
+          // @ts-ignore
+          const tx = await contract.tx.updateWinner({ gasLimit: gasLimit, storageDepositLimit: null }, (game as any).pays.gameIndex, chess.turn() === "w" ? 1 : 0);
+          const signtx = await tx
+            .signAndSend(newPair, (result) => {
+              if (result.status.isInBlock) {
+                console.log("in a block");
+              } else if (result.status.isFinalized) {
+                console.log("finalized");
+                res.json("finalized");
+              }
+            })
+            .catch((e) => console.log("e", e));
+          const newDocs = {
+            $set: {
+              isClaimed: true,
+            },
+          };
+          await gameCollection.findOneAndUpdate(query, newDocs);
+        });
 
-      // const gasLimit = 100000n * 1000000n;
-      const gasLimit2 = api.registry.createType("WeightV2", api.consts.system.blockWeights["maxBlock"]) as WeightV2;
-      // const gasLimit3 = readOnlyGasLimit(api);
-
-      const { result, output } = await contract.query.getCounter(newPair.address, { gasLimit: gasLimit2, value: 0 });
-      if (result.isOk && output) {
-        console.log("7s200", output.toHuman());
+        api.on("error", (err) => {
+          console.log("error", err);
+        });
       }
-
-      // const transfer = api.tx.balances.transferAllowDeath("5D4s8PFzAtY7sdnCCuC6n7nHCio19dPmwC6ytkQrWUZjCaXN", 10000000000000);
-      // const hash = await transfer.signAndSend(newPair);
-
-      // const txh = await api.tx.contracts.call("5CRDBTruY3hLTCQmn7MTnULpL3ALXLMEUWLDa826hyFftKkK", 0, gasLimit, abi.);
-
-      // const tx = await contract.tx.matchGame({ gasLimit: gasLimit, storageDepositLimit: null, value: 10000000000000 }, 4);
-
-      // const signTx = await tx.signAndSend(newPair, (result) => {
-      //   if (result.status.isInBlock) {
-      //     console.log("in a block");
-      //   } else if (result.status.isFinalized) {
-      //     console.log("finalized");
-      //   }
-      // });
-
-      // @ts-ignore
-      const tx = await contract.tx.updateWinner({ gasLimit: gasLimit, storageDepositLimit: null }, 2, 1);
-      const signtx = await tx
-        .signAndSend(newPair, (result) => {
-          if (result.status.isInBlock) {
-            console.log("in a block");
-          } else if (result.status.isFinalized) {
-            console.log("finalized");
-          }
-        })
-        .catch((e) => console.log("e", e));
-    });
-
-    api.on("error", (err) => {
-      console.log("error", err);
-    });
-
-    // const provider = new WsProvider("wss://ws.test.azero.dev");
-    // const api = await ApiPromise.create({
-    //   provider: provider,
-    // });
-
-    // const contract = new ContractPromise(api, abi, "5CRDBTruY3hLTCQmn7MTnULpL3ALXLMEUWLDa826hyFftKkK");
-
-    // const gasLimit = 30000n * 1000000n;
-    // // const gasLimit = readOnlyGasLimit(globalApi);
-    // // const gasLimit2 = api.registry.createType("WeightV2", api.consts.system.blockWeights["maxBlock"]) as WeightV2;
-    // // console.log("7s200:gas", gasLimit);
-    // // console.log("7s200:gas2", gasLimit2.toHuman());
-    // const chain = await api.rpc.system.chain();
-    // console.log("7s200:chain", chain);
-    // const storageDepositLimit = null;
-    // const PHRASE = "provide toy deposit expect popular mesh undo resist jazz pizza wolf churn";
-    // const newPair = keyring.addFromUri(PHRASE);
-
-    // const gameIndex = 2;
-
-    // // const { result, output } = await contract.query.getGameInfo(
-    // //   newPair.address,
-    // //   {
-    // //     gasLimit: gasLimit2,
-    // //     storageDepositLimit,
-    // //   },
-    // //   gameIndex
-    // // );
-    // // if (result.isOk) {
-    // //   res.json(output.toHuman());
-    // //   const txn = await contract.tx.updateWinner({ gasLimit: gasLimit, storageDepositLimit: storageDepositLimit }, gameIndex, 1).signAndSend(newPair, (result) => {
-    // //     console.log("7s200:winner", result.isError, result.isCompleted);
-    // //   });
-    // //   res.json(txn);
-    // //   return;
-    // // }
-    // // res.json(null);
-    // const txn = await contract.tx.updateWinner({ gasLimit, storageDepositLimit: storageDepositLimit }, gameIndex, 1).signAndSend(newPair, (result) => {
-    //   console.log("7s200:winner", result.isError, result.isCompleted);
-    // });
-    // res.json(txn);
+    }
   },
 };
 
