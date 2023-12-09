@@ -6,7 +6,8 @@
   "author": "LeVien <levien.workspace@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "npx env-cmd webpack --mode development --watch"
+    "start": "npx env-cmd webpack --mode development --watch",
+    "build": "webpack --mode production"
   },
   "dependencies": {
     "@polkadot/api": "^10.11.1",
