@@ -28,7 +28,7 @@ import jsonrpc from "@polkadot/types/interfaces/jsonrpc";
     next();
   });
   app.get("/ping", (req, res) => {
-    res.json("pong");
+    res.json("pong 1");
   });
   app.use("/", routes);
 
@@ -43,7 +43,7 @@ import jsonrpc from "@polkadot/types/interfaces/jsonrpc";
 
   const io = new Server({
     cors: {
-      origin: "http://localhost:3000",
+      origin: ["http://localhost:3000", "https://www.client.movechess.com/"],
     },
   }).listen(http);
 
