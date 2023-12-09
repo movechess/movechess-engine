@@ -23,32 +23,17 @@ import cors from "cors";
   app.use(express.json());
   app.use(bodyParser.urlencoded({ extended: false }));
 
-  // app.use(function (req, res, next) {
-  //   res.header("Access-Control-Allow-Origin", "*");
-  //   res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
-  //   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  //   next();
-  // });
-
-  var allowlist = ["http://localhost:3000", "https://www.client.movechess.com"];
-  var corsOptionsDelegate = function (req, callback) {
-    var corsOptions;
-    // if (req.header("Origin") === "https://www.client.movechess.com/") {
-    //   corsOptions = { origin: true };
-    // }
-    // if (allowlist.indexOf(req.header("Origin")) !== -1) {
-    //   corsOptions = { origin: true }; // reflect (enable) the requested origin in the CORS response
-    // } else {
-    //   corsOptions = { origin: false }; // disable CORS for this request
-    // }
-    corsOptions = { origin: true };
-    callback(null, corsOptions); // callback expects two parameters: error and options
-  };
-
-  app.get("/ping", cors(corsOptionsDelegate), (req, res) => {
-    res.json("pong 4");
+  app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "https://www.client.movechess.com");
+    res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    next();
   });
-  app.use("/", cors(corsOptionsDelegate), routes);
+
+  app.get("/ping", (req, res) => {
+    res.json("pong 5");
+  });
+  app.use("/", routes);
 
   await client.connect().catch((err) => console.log("7s200:err", err));
   client.on("close", () => {
