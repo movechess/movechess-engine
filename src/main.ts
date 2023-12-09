@@ -19,6 +19,7 @@ import jsonrpc from "@polkadot/types/interfaces/jsonrpc";
 import cors from "cors";
 
 (async function main() {
+  app.use(cors());
   app.use(express.json());
   app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -45,7 +46,7 @@ import cors from "cors";
   };
 
   app.get("/ping", cors(corsOptionsDelegate), (req, res) => {
-    res.json("pong 3");
+    res.json("pong 4");
   });
   app.use("/", cors(corsOptionsDelegate), routes);
 
