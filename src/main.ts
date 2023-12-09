@@ -2,7 +2,8 @@ import express from "express";
 import { client } from "./database";
 import routes from "./router";
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3000;
+
 import bodyParser from "body-parser";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
