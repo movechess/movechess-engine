@@ -12,6 +12,7 @@
   "dependencies": {
     "@polkadot/api": "^10.11.1",
     "@polkadot/api-contract": "^10.11.1",
+    "@polkadot/extension-dapp": "latest",
     "@polkadot/types": "^10.11.1",
     "@tsconfig/node-lts": "^18.12.5",
     "@types/lodash": "^4.14.201",

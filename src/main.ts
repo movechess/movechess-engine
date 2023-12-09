@@ -95,7 +95,9 @@ import { TGame } from "./router/game";
       socket.on(board.game_id, async function (move) {
         const { from, to, turn, address, isPromotion, fen } = move; //fake fen'
         console.log("7s200:turn", (socket as any).user, turn);
-
+        if ((board as any).isGameDraw || (board as any).isGameOver) {
+          return;
+        }
         if ((board.turn_player !== turn && turn === "b" && (socket as any).user === board.player_1) || (board.turn_player !== turn && turn === "w" && (socket as any).user === board.player_2)) {
           const chess = new ChessV2(fen);
           try {

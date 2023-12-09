@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { dbCollection } from "../database/collection";
 export async function authenToken(req, res, next) {
   const authorizationClient = req.headers["authorization"];
+
   const token = authorizationClient && authorizationClient.split(" ")[1];
   if (!token) return res.sendStatus(401);
 

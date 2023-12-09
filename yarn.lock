@@ -159,6 +159,29 @@
     rxjs "^7.8.1"
     tslib "^2.6.2"
 
+"@polkadot/extension-dapp@latest":
+  version "0.46.6"
+  resolved "https://registry.yarnpkg.com/@polkadot/extension-dapp/-/extension-dapp-0.46.6.tgz#5ae08a9541842939363cdef4e41e72650322c4c2"
+  integrity sha512-J8uhlAhCJkrVimS/ItCdXwgce9mbGZBwAAZLk9vxz7MGb9KkBV9wjy7xas7EPkA1fkSZ4hq+G9l8ybd+uwgp6Q==
+  dependencies:
+    "@polkadot/extension-inject" "0.46.6"
+    "@polkadot/util" "^12.6.1"
+    "@polkadot/util-crypto" "^12.6.1"
+    tslib "^2.6.2"
+
+"@polkadot/extension-inject@0.46.6":
+  version "0.46.6"
+  resolved "https://registry.yarnpkg.com/@polkadot/extension-inject/-/extension-inject-0.46.6.tgz#0fa2b79d5f9b91ae2cc8d9c943af6e19bc2125c8"
+  integrity sha512-5lJzL/iQ9oUcIDcER22Hxdjj4S9CoWS09yQoAKkfAmZMuTJkL/j36m7AnpNPN5ohWoPyd1Yl/JfwtoLmtRoZog==
+  dependencies:
+    "@polkadot/api" "^10.11.1"
+    "@polkadot/rpc-provider" "^10.11.1"
+    "@polkadot/types" "^10.11.1"
+    "@polkadot/util" "^12.6.1"
+    "@polkadot/util-crypto" "^12.6.1"
+    "@polkadot/x-global" "^12.6.1"
+    tslib "^2.6.2"
+
 "@polkadot/keyring@^12.6.1":
   version "12.6.1"
   resolved "https://registry.yarnpkg.com/@polkadot/keyring/-/keyring-12.6.1.tgz#0984dd625edd582750d8975f1898a4acb14bda8b"
@@ -200,7 +223,7 @@
     rxjs "^7.8.1"
     tslib "^2.6.2"
 
-"@polkadot/rpc-provider@10.11.1":
+"@polkadot/rpc-provider@10.11.1", "@polkadot/rpc-provider@^10.11.1":
   version "10.11.1"
   resolved "https://registry.yarnpkg.com/@polkadot/rpc-provider/-/rpc-provider-10.11.1.tgz#8d94e96bba71ee8bbce9baf407b411c523fc2f28"
   integrity sha512-86aDUOnaG42si0jSOAgn6Fs3F3rz57x+iNBK1JpM0PLL2XvmPuoMZL5dZwzqSIey3nVdGJqRYfnFquWuyQpnOQ==
