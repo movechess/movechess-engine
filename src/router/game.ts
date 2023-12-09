@@ -3,6 +3,13 @@ import Chess from "../engine/chess";
 import { dbCollection } from "../database/collection";
 import { Chess as ChessV2 } from "../engine/chess2";
 import md5 from "md5";
+import BN from "bn.js";
+import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
+import { ContractPromise } from "@polkadot/api-contract";
+import jsonrpc from "@polkadot/types/interfaces/jsonrpc";
+import { numberToU8a, stringToHex } from "@polkadot/util";
+import abi from "../abi/movechesscontract.json";
+import { WeightV2 } from "@polkadot/types/interfaces";
 
 export type TGame = {
   game_id: string;
@@ -14,6 +21,9 @@ export type TGame = {
   move_number: number;
   fen: string;
 };
+
+const keyring = new Keyring({ type: "sr25519" });
+const DEFAULT_0X0_ADDRESS = "5HrN7fHLXWcFiXPwwtq2EkSGns9eMt5P7SpeTPewumZy6ftb";
 
 export const gameController = {
   newGame: async (req, res) => {
@@ -175,4 +185,42 @@ export const gameController = {
   },
 
   makeMoveV2: async (req, res) => {},
+
+  updateWinnerV2: async (req, res) => {
+    const { winner } = req.body;
+
+    const provider = new WsProvider("wss://ws.test.azero.dev");
+    const api = await ApiPromise.create({
+      provider: provider,
+    });
+
+    const gasLimit = 30000n * 1000000n;
+    const gasLimit2 = api.registry.createType("WeightV2", api.consts.system.blockWeights["maxBlock"]) as WeightV2;
+    console.log("7s200:gas", gasLimit);
+    console.log("7s200:gas2", gasLimit2.toHuman());
+    const storageDepositLimit = null;
+    const contract = new ContractPromise(api, abi, "5CRDBTruY3hLTCQmn7MTnULpL3ALXLMEUWLDa826hyFftKkK");
+    const PHRASE = "provide toy deposit expect popular mesh undo resist jazz pizza wolf churn";
+    const newPair = keyring.addFromUri(PHRASE);
+
+    const gameIndex = 1;
+
+    const { result, output } = await contract.query.getGameInfo(
+      newPair.address,
+      {
+        gasLimit: gasLimit2,
+        storageDepositLimit,
+      },
+      gameIndex
+    );
+    if (result.isOk) {
+      res.json(output.toHuman());
+      const txn = await contract.tx.updateWinner({ gasLimit: gasLimit, storageDepositLimit: storageDepositLimit }, { u32: gameIndex }, { u32: 1 }).signAndSend(newPair, (result) => {
+        console.log("7s200:winner", result.isError, result.isCompleted);
+      });
+      res.json(txn);
+      return;
+    }
+    res.json(null);
+  },
 };

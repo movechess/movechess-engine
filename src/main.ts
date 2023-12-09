@@ -109,14 +109,20 @@ import { TGame } from "./router/game";
             }
           } catch (error) {}
 
+          const isGameOver = chess.isGameOver();
+          const isGameDraw = chess.isDraw();
+
           const newBoard = {
             $set: {
               board: chess.board(),
               turn_player: chess.turn(),
               move_number: chess.moveNumber(),
               fen: chess.fen(),
+              isGameDraw: isGameDraw,
+              isGameOver: isGameOver,
             },
           };
+
           await collection
             .findOneAndUpdate({ game_id: board.game_id }, newBoard)
             .then((data) => {
