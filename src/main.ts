@@ -32,16 +32,20 @@ import cors from "cors";
   var allowlist = ["http://localhost:3000", "https://www.client.movechess.com"];
   var corsOptionsDelegate = function (req, callback) {
     var corsOptions;
-    if (allowlist.indexOf(req.header("Origin")) !== -1) {
-      corsOptions = { origin: true }; // reflect (enable) the requested origin in the CORS response
-    } else {
-      corsOptions = { origin: false }; // disable CORS for this request
-    }
+    // if (req.header("Origin") === "https://www.client.movechess.com/") {
+    //   corsOptions = { origin: true };
+    // }
+    // if (allowlist.indexOf(req.header("Origin")) !== -1) {
+    //   corsOptions = { origin: true }; // reflect (enable) the requested origin in the CORS response
+    // } else {
+    //   corsOptions = { origin: false }; // disable CORS for this request
+    // }
+    corsOptions = { origin: true };
     callback(null, corsOptions); // callback expects two parameters: error and options
   };
 
   app.get("/ping", cors(corsOptionsDelegate), (req, res) => {
-    res.json("pong 2");
+    res.json("pong 3");
   });
   app.use("/", cors(corsOptionsDelegate), routes);
 
