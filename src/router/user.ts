@@ -12,7 +12,7 @@ export const userController = {
       const queryPassword = { address, password };
       const temp = await collection.findOne(queryPassword);
       if (temp) {
-        const accessToken = jwt.sign(temp, process.env.ACCESS_TOKEN_SECRET, {
+        const accessToken = jwt.sign(address, process.env.ACCESS_TOKEN_SECRET, {
           expiresIn: "24h",
         });
         res.json({ status: 200, message: "LOGIN_SUCCESS", data: accessToken });
@@ -23,8 +23,8 @@ export const userController = {
     }
     console.log("7s200:register");
 
-    const insertUser = await collection.insertOne({ address, password });
-    const accessToken = jwt.sign(insertUser, process.env.ACCESS_TOKEN_SECRET, {
+    await collection.insertOne({ address, password });
+    const accessToken = jwt.sign(address, process.env.ACCESS_TOKEN_SECRET, {
       expiresIn: "24h",
     });
 
