@@ -30,7 +30,7 @@ import { MongoClient } from "mongodb";
   };
 
   app.get("/ping", (req, res) => {
-    res.json("pong 16");
+    res.json("pong 17");
   });
   // app.get("/get-game-V2", cors(corsOptions), gameController.getGamesV2);
   // app.use("/", cors(corsOptions), routes);
@@ -139,7 +139,7 @@ import { MongoClient } from "mongodb";
       };
       console.log("7s200:move:6");
 
-      await socket.emit("newMove", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
+      io.emit("newmove", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
       console.log("7s200:move:7", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
 
       await collection
