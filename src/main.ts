@@ -24,13 +24,13 @@ import cors from "cors";
   app.use(bodyParser.urlencoded({ extended: false }));
 
   let corsOptions = {
-    origin: ["http://localhost:3000", "https://www.client.movechess.com"],
+    origin: ["https://www.client.movechess.com"],
   };
 
   app.get("/ping", (req, res) => {
-    res.json("pong 7");
+    res.json("pong 8");
   });
-  app.get("/get-game-V2", cors(corsOptions), gameController.getGamesV2);
+  // app.get("/get-game-V2", cors(corsOptions), gameController.getGamesV2);
   app.use("/", cors(corsOptions), routes);
 
   await client.connect().catch((err) => console.log("7s200:err", err));
