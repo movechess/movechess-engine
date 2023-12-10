@@ -30,7 +30,7 @@ import { MongoClient } from "mongodb";
   };
 
   app.get("/ping", (req, res) => {
-    res.json("pong 13");
+    res.json("pong 14");
   });
   // app.get("/get-game-V2", cors(corsOptions), gameController.getGamesV2);
   // app.use("/", cors(corsOptions), routes);
@@ -56,13 +56,13 @@ import { MongoClient } from "mongodb";
       const token = socket.handshake.headers.authorization.toString();
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decodedToken) => {
         if (err) {
-          // throw new Error("Authentication error, Invalid Token supplied");
+          console.log("7s200:socket:auth:err", err, decodedToken);
           return;
         }
         const { collection } = await dbCollection<any>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_USERS!);
         const userData = await collection.findOne({ address: decodedToken.address });
         if (!userData) {
-          // throw new Error("Invalid Email or Password, Kindly contact the admin if this is an anomaly");
+          console.log("7s200:socket:auth:err:userData", userData, decodedToken);
           return;
         }
         (socket as any).user = userData.address;
