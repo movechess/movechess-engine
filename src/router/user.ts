@@ -4,29 +4,29 @@ export const userController = {
   createUser: async (req, res) => {
     const { address, password } = req.body;
     const query = { address };
-    const { collection } = await dbCollection<any>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_USERS!);
-    const user = await collection.findOne(query);
+    // const { collection } = await dbCollection<any>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_USERS!);
+    // const user = await collection.findOne(query);
 
-    if (user) {
-      const queryPassword = { address, password };
-      const temp = await collection.findOne(queryPassword);
-      if (temp) {
-        const accessToken = jwt.sign(temp, process.env.ACCESS_TOKEN_SECRET, {
-          expiresIn: "24h",
-        });
-        res.json({ status: 200, message: "LOGIN_SUCCESS", data: accessToken });
-        return;
-      }
-      res.json({ status: 404, message: "ERROR_PASSWORD" });
-      return;
-    }
+    // if (user) {
+    //   const queryPassword = { address, password };
+    //   const temp = await collection.findOne(queryPassword);
+    //   if (temp) {
+    //     const accessToken = jwt.sign(temp, process.env.ACCESS_TOKEN_SECRET, {
+    //       expiresIn: "24h",
+    //     });
+    //     res.json({ status: 200, message: "LOGIN_SUCCESS", data: accessToken });
+    //     return;
+    //   }
+    //   res.json({ status: 405, message: "ERROR_PASSWORD" });
+    //   return;
+    // }
 
-    const insertUser = await collection.insertOne({ address, password });
-    const accessToken = jwt.sign(insertUser, process.env.ACCESS_TOKEN_SECRET, {
-      expiresIn: "24h",
-    });
+    // const insertUser = await collection.insertOne({ address, password });
+    // const accessToken = jwt.sign(insertUser, process.env.ACCESS_TOKEN_SECRET, {
+    //   expiresIn: "24h",
+    // });
 
-    res.json({ status: 200, message: "REGISTER_SUCCESS", data: accessToken });
+    res.json({ status: 200, message: "REGISTER_SUCCESS", data: "accessToken" });
   },
   getUser: async (req, res) => {
     if (req.userData) {
