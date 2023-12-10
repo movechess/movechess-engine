@@ -30,7 +30,7 @@ import { MongoClient } from "mongodb";
   };
 
   app.get("/ping", (req, res) => {
-    res.json("pong 15");
+    res.json("pong 16");
   });
   // app.get("/get-game-V2", cors(corsOptions), gameController.getGamesV2);
   // app.use("/", cors(corsOptions), routes);
@@ -61,6 +61,7 @@ import { MongoClient } from "mongodb";
         }
         const { collection } = await dbCollection<any>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_USERS!);
         const userData = await collection.findOne({ address: decodedToken.address });
+        console.log("7s200:userData", userData);
         if (!userData) {
           console.log("7s200:socket:auth:err:userData", userData, decodedToken);
           return;
@@ -138,7 +139,7 @@ import { MongoClient } from "mongodb";
       };
       console.log("7s200:move:6");
 
-      socket.emit("newMove", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
+      await socket.emit("newMove", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
       console.log("7s200:move:7", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
 
       await collection
