@@ -103,7 +103,7 @@ import { MongoClient } from "mongodb";
       const board = await collection.findOne({ game_id: data.game_id });
 
       if ((board as any).isPaymentMatch) {
-        if (board.player_1 !== (socket as any).user && (board as any).pays.player1 === 10000000000000) {
+        if (board.player_1 !== (socket as any).user && (board as any).pays.player1 === 10000000000000 && board.player_2 === "") {
           if ((board as any).pays.gameIndex) {
             const provider = new WsProvider("wss://ws.test.azero.dev");
             const api = await ApiPromise.create({
