@@ -103,37 +103,41 @@ import { MongoClient } from "mongodb";
       const board = await collection.findOne({ game_id: data.game_id });
 
       if ((board as any).isPaymentMatch) {
-        if (board.player_1 !== (socket as any).user && (board as any).pays.player1 === 10000000000000 && board.player_2 === "") {
-          if ((board as any).pays.gameIndex) {
-            const provider = new WsProvider("wss://ws.test.azero.dev");
-            const api = await ApiPromise.create({
-              provider,
-              rpc: jsonrpc,
-            });
-            const contract = new ContractPromise(api, abi, "5CRDBTruY3hLTCQmn7MTnULpL3ALXLMEUWLDa826hyFftKkK");
-            const gasLimit2 = api.registry.createType("WeightV2", api.consts.system.blockWeights["maxBlock"]) as WeightV2;
-            const { result, output } = await contract.query.getGameInfo("5E7zwZHqCv53cWrFqfmaVBQ7u6dnWMR4dEdepAWBHAKx9LkH", { gasLimit: gasLimit2 }, (board as any).pays.gameIndex);
-            if (result.isOk && output) {
-              if ((output.toJSON() as any).ok.userBPayable === true) {
-                const updateboard = {
-                  $set: {
-                    player_2: (socket as any).user,
-                    pays: {
-                      player1: 10000000000000,
-                      gameIndex: (board as any).pays.gameIndex,
-                      player2: 10000000000000,
-                    },
+        console.log("7s200:join", (socket as any).user);
+        // if (board.player_1 !== (socket as any).user && (board as any).pays.player1 === 10000000000000 && board.player_2 === "") {
+
+        // }
+        if ((board as any).pays.gameIndex) {
+          const provider = new WsProvider("wss://ws.test.azero.dev");
+          const api = await ApiPromise.create({
+            provider,
+            rpc: jsonrpc,
+          });
+          const contract = new ContractPromise(api, abi, "5CRDBTruY3hLTCQmn7MTnULpL3ALXLMEUWLDa826hyFftKkK");
+          const gasLimit2 = api.registry.createType("WeightV2", api.consts.system.blockWeights["maxBlock"]) as WeightV2;
+          const { result, output } = await contract.query.getGameInfo("5E7zwZHqCv53cWrFqfmaVBQ7u6dnWMR4dEdepAWBHAKx9LkH", { gasLimit: gasLimit2 }, (board as any).pays.gameIndex);
+          if (result.isOk && output) {
+            console.log("7s200:", (socket as any).user, (output.toJSON() as any).ok);
+            if ((output.toJSON() as any).ok.userBPayable === true) {
+              const updateboard = {
+                $set: {
+                  player_1: (output.toJSON() as any).ok.userA,
+                  player_2: (output.toJSON() as any).ok.userB,
+                  pays: {
+                    player1: 10000000000000,
+                    gameIndex: (board as any).pays.gameIndex,
+                    player2: 10000000000000,
                   },
-                };
-                await collection
-                  .findOneAndUpdate({ game_id: board.game_id }, updateboard)
-                  .then((data) => {
-                    console.log("7s200:data", data);
-                  })
-                  .catch((err) => {
-                    console.log("7s200:err", err);
-                  });
-              }
+                },
+              };
+              await collection
+                .findOneAndUpdate({ game_id: board.game_id }, updateboard)
+                .then((data) => {
+                  console.log("7s200:data", data);
+                })
+                .catch((err) => {
+                  console.log("7s200:err", err);
+                });
             }
           }
         }
