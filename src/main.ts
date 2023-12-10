@@ -102,64 +102,6 @@ import { MongoClient } from "mongodb";
     socket.on("joinGame", async function (data) {
       const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
       const board = await collection.findOne({ game_id: data.game_id });
-      socket.join(board.game_id);
-      console.log("7s200:listen", 1);
-      socket.on(board.game_id, async function (move) {
-        console.log("7s200:listen", 2);
-
-        const { from, to, turn, address, isPromotion, fen } = move; //fake fen'
-        console.log("7s200:turn", (socket as any).user, turn);
-        if ((board as any).isGameDraw || (board as any).isGameOver) {
-          return;
-        }
-        const chess = new ChessV2(fen);
-        try {
-          if (!isPromotion) {
-            chess.move({
-              from: from,
-              to: to,
-            });
-            // if (_move === null) {
-            //   return;
-            // }
-          }
-        } catch (error) {}
-
-        const isGameOver = chess.isGameOver();
-        const isGameDraw = chess.isDraw();
-
-        const newBoard = {
-          $set: {
-            board: chess.board(),
-            turn_player: chess.turn(),
-            move_number: chess.moveNumber(),
-            fen: chess.fen(),
-            isGameDraw: isGameDraw,
-            isGameOver: isGameOver,
-          },
-        };
-        io.to(board.game_id).emit("newMove", { from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
-
-        await collection
-          .findOneAndUpdate({ game_id: board.game_id }, newBoard)
-          .then((data) => {
-            if (data) {
-              //  io.to(board.game_id).emit("newMove", { from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
-            }
-          })
-          .catch((err) => {
-            console.log("7s200:err", err);
-          });
-
-        // if ((board.turn_player !== turn && turn === "b" && (socket as any).user === board.player_1) || (board.turn_player !== turn && turn === "w" && (socket as any).user === board.player_2)) {
-        //  // h
-        //   // console.log("7s200:chess", newBoard);
-        // }
-        // else {
-        //   // io.to(board.game_id).emit("newMove", { from, to, board: board.board, turn: board.turn_player, fen: board.fen });
-        // }
-      });
-      console.log("7s200:listen", 3);
 
       socket.join(board.game_id);
       if ((board as any).isPaymentMatch) {
@@ -234,6 +176,63 @@ import { MongoClient } from "mongodb";
         await collection.findOneAndUpdate({ game_id: data.game_id }, updateDoc);
         socket.join(data.game_id);
       }
+    });
+    socket.on("move", async function (move) {
+      console.log("7s200:listen", 2);
+      const { from, to, turn, address, isPromotion, fen, game_id } = move; //fake fen'
+
+      const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
+      const board = await collection.findOne({ game_id: game_id });
+      console.log("7s200:turn", (socket as any).user, turn);
+      if ((board as any).isGameDraw || (board as any).isGameOver) {
+        return;
+      }
+      const chess = new ChessV2(fen);
+      try {
+        if (!isPromotion) {
+          chess.move({
+            from: from,
+            to: to,
+          });
+          // if (_move === null) {
+          //   return;
+          // }
+        }
+      } catch (error) {}
+
+      const isGameOver = chess.isGameOver();
+      const isGameDraw = chess.isDraw();
+
+      const newBoard = {
+        $set: {
+          board: chess.board(),
+          turn_player: chess.turn(),
+          move_number: chess.moveNumber(),
+          fen: chess.fen(),
+          isGameDraw: isGameDraw,
+          isGameOver: isGameOver,
+        },
+      };
+      io.to(board.game_id).emit("newMove", { from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
+
+      await collection
+        .findOneAndUpdate({ game_id: board.game_id }, newBoard)
+        .then((data) => {
+          if (data) {
+            //  io.to(board.game_id).emit("newMove", { from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
+          }
+        })
+        .catch((err) => {
+          console.log("7s200:err", err);
+        });
+
+      // if ((board.turn_player !== turn && turn === "b" && (socket as any).user === board.player_1) || (board.turn_player !== turn && turn === "w" && (socket as any).user === board.player_2)) {
+      //  // h
+      //   // console.log("7s200:chess", newBoard);
+      // }
+      // else {
+      //   // io.to(board.game_id).emit("newMove", { from, to, board: board.board, turn: board.turn_player, fen: board.fen });
+      // }
     });
 
     socket.on("disconnect", function () {
