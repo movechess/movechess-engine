@@ -26,7 +26,7 @@ export const userController = {
       expiresIn: "24h",
     });
 
-    res.json({ status: 200, message: "REGISTER_SUCCESS", data: "accessToken" });
+    res.json({ status: 200, message: "REGISTER_SUCCESS", data: accessToken });
   },
   getUser: async (req, res) => {
     if (req.userData) {
