@@ -150,100 +150,52 @@ import { MongoClient } from "mongodb";
         if ((board as any).isGameDraw || (board as any).isGameOver) {
           return;
         }
-        if ((board.turn_player !== turn && turn === "b" && (socket as any).user === board.player_1) || (board.turn_player !== turn && turn === "w" && (socket as any).user === board.player_2)) {
-          const chess = new ChessV2(fen);
-          try {
-            if (!isPromotion) {
-              chess.move({
-                from: from,
-                to: to,
-              });
-              // if (_move === null) {
-              //   return;
-              // }
-            }
-          } catch (error) {}
-
-          const isGameOver = chess.isGameOver();
-          const isGameDraw = chess.isDraw();
-
-          // if (isGameOver && (board as any).isPaymentMatch) {
-          //   const provider = new WsProvider("wss://ws.test.azero.dev");
-          //   const api = new ApiPromise({
-          //     provider,
-          //     rpc: jsonrpc,
-          //     types: {
-          //       ContractsPsp34Id: {
-          //         _enum: {
-          //           U8: "u8",
-          //           U16: "u16",
-          //           U32: "u32",
-          //           U64: "u64",
-          //           U128: "u128",
-          //           Bytes: "Vec<u8>",
-          //         },
-          //       },
-          //     },
-          //   });
-          //   api.on("connected", async () => {
-          //     api.isReady.then((api) => {
-          //       console.log("Smartnet AZERO Connected");
-          //     });
-          //   });
-          //   api.on("ready", async () => {
-          //     const contract = new ContractPromise(api, abi, "5CRDBTruY3hLTCQmn7MTnULpL3ALXLMEUWLDa826hyFftKkK");
-          //     console.log("Collection Contract is ready");
-          //     const PHRASE = "provide toy deposit expect popular mesh undo resist jazz pizza wolf churn";
-          //     const newPair = keyring.addFromUri(PHRASE);
-
-          //     const gasLimitResult = await getGasLimit(contract.api, newPair.address, "updateWinner", contract, {}, [(board as any).pays.gameIndex, chess.turn() === "w" ? 0 : 1]);
-          //     const { value: gasLimit } = gasLimitResult;
-          //     console.log("7s200:gas", gasLimit);
-
-          //     // @ts-ignore
-          //     const tx = await contract.tx.updateWinner({ gasLimit: gasLimit, storageDepositLimit: null }, (board as any).pays.gameIndex, chess.turn() === "w" ? 0 : 1);
-          //     const signtx = await tx
-          //       .signAndSend(newPair, (result) => {
-          //         if (result.status.isInBlock) {
-          //           console.log("in a block");
-          //         } else if (result.status.isFinalized) {
-          //           console.log("finalized");
-          //         }
-          //       })
-          //       .catch((e) => console.log("e", e));
-          //     console.log("7s200:chess.tur", isGameOver, (board as any).isPaymentMatch);
-          //   });
-
-          //   api.on("error", (err) => {
-          //     console.log("error", err);
-          //   });
-          // }
-
-          const newBoard = {
-            $set: {
-              board: chess.board(),
-              turn_player: chess.turn(),
-              move_number: chess.moveNumber(),
-              fen: chess.fen(),
-              isGameDraw: isGameDraw,
-              isGameOver: isGameOver,
-            },
-          };
-
-          await collection
-            .findOneAndUpdate({ game_id: board.game_id }, newBoard)
-            .then((data) => {
-              if (data) {
-                io.to(board.game_id).emit("newMove", { from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
-              }
-            })
-            .catch((err) => {
-              console.log("7s200:err", err);
+        const chess = new ChessV2(fen);
+        try {
+          if (!isPromotion) {
+            chess.move({
+              from: from,
+              to: to,
             });
-          // console.log("7s200:chess", newBoard);
-        } else {
-          // io.to(board.game_id).emit("newMove", { from, to, board: board.board, turn: board.turn_player, fen: board.fen });
-        }
+            // if (_move === null) {
+            //   return;
+            // }
+          }
+        } catch (error) {}
+
+        const isGameOver = chess.isGameOver();
+        const isGameDraw = chess.isDraw();
+
+        const newBoard = {
+          $set: {
+            board: chess.board(),
+            turn_player: chess.turn(),
+            move_number: chess.moveNumber(),
+            fen: chess.fen(),
+            isGameDraw: isGameDraw,
+            isGameOver: isGameOver,
+          },
+        };
+
+        await collection
+          .findOneAndUpdate({ game_id: board.game_id }, newBoard)
+          .then((data) => {
+            if (data) {
+              //  io.to(board.game_id).emit("newMove", { from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
+            }
+          })
+          .catch((err) => {
+            console.log("7s200:err", err);
+          });
+        io.to(board.game_id).emit("newMove", { from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
+
+        // if ((board.turn_player !== turn && turn === "b" && (socket as any).user === board.player_1) || (board.turn_player !== turn && turn === "w" && (socket as any).user === board.player_2)) {
+        //  // h
+        //   // console.log("7s200:chess", newBoard);
+        // }
+        // else {
+        //   // io.to(board.game_id).emit("newMove", { from, to, board: board.board, turn: board.turn_player, fen: board.fen });
+        // }
       });
       if (board.player_1.length > 0 && board.player_2.length > 0) {
         io.to(data.game_id).emit("start");
