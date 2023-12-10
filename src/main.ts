@@ -134,7 +134,7 @@ import { MongoClient } from "mongodb";
           isGameOver: isGameOver,
         },
       };
-      io.to(board.game_id).emit("newMove", { from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
+      socket.emit("newMove", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
 
       await collection
         .findOneAndUpdate({ game_id: board.game_id }, newBoard)
