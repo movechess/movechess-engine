@@ -101,7 +101,7 @@ import { MongoClient } from "mongodb";
     socket.on("joinGame", async function (data) {
       const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
       const board = await collection.findOne({ game_id: data.game_id });
-
+      socket.join(board.game_id);
       if ((board as any).isPaymentMatch) {
         console.log("7s200:join", (socket as any).user);
         // if (board.player_1 !== (socket as any).user && (board as any).pays.player1 === 10000000000000 && board.player_2 === "") {
@@ -176,6 +176,7 @@ import { MongoClient } from "mongodb";
             isGameOver: isGameOver,
           },
         };
+        io.to(board.game_id).emit("newMove", { from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
 
         await collection
           .findOneAndUpdate({ game_id: board.game_id }, newBoard)
@@ -187,7 +188,6 @@ import { MongoClient } from "mongodb";
           .catch((err) => {
             console.log("7s200:err", err);
           });
-        io.to(board.game_id).emit("newMove", { from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
 
         // if ((board.turn_player !== turn && turn === "b" && (socket as any).user === board.player_1) || (board.turn_player !== turn && turn === "w" && (socket as any).user === board.player_2)) {
         //  // h
