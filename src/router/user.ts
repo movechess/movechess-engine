@@ -6,13 +6,11 @@ export const userController = {
     const query = { address };
     const { collection } = await dbCollection<any>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_USERS!);
     const user = await collection.findOne(query);
-    console.log("7s200:user", user);
     if (user) {
-      console.log("7s200:login");
       const queryPassword = { address, password };
       const temp = await collection.findOne(queryPassword);
       if (temp) {
-        const accessToken = jwt.sign(address, process.env.ACCESS_TOKEN_SECRET, {
+        const accessToken = jwt.sign({ address: temp.address }, process.env.ACCESS_TOKEN_SECRET, {
           expiresIn: "24h",
         });
         res.json({ status: 200, message: "LOGIN_SUCCESS", data: accessToken });
@@ -24,7 +22,7 @@ export const userController = {
     console.log("7s200:register");
 
     await collection.insertOne({ address, password });
-    const accessToken = jwt.sign(address, process.env.ACCESS_TOKEN_SECRET, {
+    const accessToken = jwt.sign({ address }, process.env.ACCESS_TOKEN_SECRET, {
       expiresIn: "24h",
     });
 
