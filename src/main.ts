@@ -17,6 +17,7 @@ import { ContractPromise } from "@polkadot/api-contract";
 import abi from "./abi/movechesscontract.json";
 import { WeightV2 } from "@polkadot/types/interfaces/types";
 import jsonrpc from "@polkadot/types/interfaces/jsonrpc";
+import { MongoClient } from "mongodb";
 
 (async function main() {
   app.use(cors());
@@ -116,6 +117,7 @@ import jsonrpc from "@polkadot/types/interfaces/jsonrpc";
               if ((output.toJSON() as any).ok.userBPayable === true) {
                 const updateboard = {
                   $set: {
+                    player_2: (output.toJSON() as any).ok.userB,
                     pays: {
                       player1: 10000000000000,
                       gameIndex: (board as any).pays.gameIndex,
