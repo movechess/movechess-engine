@@ -5,6 +5,8 @@ import { authenToken } from "../auth/auth";
 
 const routes = new Router();
 
+routes.get("/user/ping", userController.ping);
+routes.get("/users", userController.getUser);
 routes.post("/create-user", userController.createUser);
 routes.get("/get-user", authenToken, userController.getUser);
 

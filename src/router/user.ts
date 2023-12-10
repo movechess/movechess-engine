@@ -6,8 +6,9 @@ export const userController = {
     const query = { address };
     const { collection } = await dbCollection<any>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_USERS!);
     const user = await collection.findOne(query);
-
+    console.log("7s200:user", user);
     if (user) {
+      console.log("7s200:login");
       const queryPassword = { address, password };
       const temp = await collection.findOne(queryPassword);
       if (temp) {
@@ -20,6 +21,7 @@ export const userController = {
       res.json({ status: 405, message: "ERROR_PASSWORD" });
       return;
     }
+    console.log("7s200:register");
 
     const insertUser = await collection.insertOne({ address, password });
     const accessToken = jwt.sign(insertUser, process.env.ACCESS_TOKEN_SECRET, {
@@ -27,6 +29,18 @@ export const userController = {
     });
 
     res.json({ status: 200, message: "REGISTER_SUCCESS", data: accessToken });
+  },
+  ping: async (req, res) => {
+    res.json("user:router:ping");
+  },
+  getAllUser: async (req, res) => {
+    const { collection } = await dbCollection<any>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_USERS!);
+    const user = await collection.find().toArray();
+    if (user) {
+      res.json(user);
+      return;
+    }
+    res.json(null);
   },
   getUser: async (req, res) => {
     if (req.userData) {
