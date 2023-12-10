@@ -99,30 +99,32 @@ import { MongoClient } from "mongodb";
       }
     });
     socket.on("move", async function (move) {
-      console.log("7s200:listen", 2);
+      console.log("7s200:move:2");
       const { from, to, turn, address, isPromotion, fen, game_id } = move; //fake fen'
 
       const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
       const board = await collection.findOne({ game_id: game_id });
-      console.log("7s200:turn", (socket as any).user, turn);
+      console.log("7s200:move:3", (socket as any).user, turn, game_id);
       if ((board as any).isGameDraw || (board as any).isGameOver) {
         return;
       }
+      console.log("7s200:move:4");
       const chess = new ChessV2(fen);
       try {
+        console.log("7s200:move:promotion");
         if (!isPromotion) {
           chess.move({
             from: from,
             to: to,
           });
-          // if (_move === null) {
-          //   return;
-          // }
         }
-      } catch (error) {}
+      } catch (error) {
+        console.log("7s200:move:err");
+      }
 
       const isGameOver = chess.isGameOver();
       const isGameDraw = chess.isDraw();
+      console.log("7s200:move:5");
 
       const newBoard = {
         $set: {
@@ -134,18 +136,24 @@ import { MongoClient } from "mongodb";
           isGameOver: isGameOver,
         },
       };
+      console.log("7s200:move:6");
+
       socket.emit("newMove", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
+      console.log("7s200:move:7", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
 
       await collection
         .findOneAndUpdate({ game_id: board.game_id }, newBoard)
         .then((data) => {
           if (data) {
+            console.log("7s200:move:8");
+
             //  io.to(board.game_id).emit("newMove", { from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
           }
         })
         .catch((err) => {
           console.log("7s200:err", err);
         });
+      console.log("7s200:move:9");
 
       // if ((board.turn_player !== turn && turn === "b" && (socket as any).user === board.player_1) || (board.turn_player !== turn && turn === "w" && (socket as any).user === board.player_2)) {
       //  // h
