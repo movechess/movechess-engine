@@ -1,6 +1,7 @@
 import express from "express";
 import { client } from "./database";
 import routes from "./router";
+import cors from "cors";
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -16,7 +17,6 @@ import { ContractPromise } from "@polkadot/api-contract";
 import abi from "./abi/movechesscontract.json";
 import { WeightV2 } from "@polkadot/types/interfaces/types";
 import jsonrpc from "@polkadot/types/interfaces/jsonrpc";
-import cors from "cors";
 
 (async function main() {
   app.use(cors());
@@ -24,15 +24,16 @@ import cors from "cors";
   app.use(bodyParser.urlencoded({ extended: false }));
 
   let corsOptions = {
-    origin: ["https://www.client.movechess.com"],
+    origin: ["https://www.client.movechess.com", "https://client.movechess.com"],
+    credentials: true,
   };
 
   app.get("/ping", (req, res) => {
     res.json("pong 8");
   });
   // app.get("/get-game-V2", cors(corsOptions), gameController.getGamesV2);
-  app.use("/", cors(corsOptions), routes);
-
+  // app.use("/", cors(corsOptions), routes);
+  app.use(cors());
   await client.connect().catch((err) => console.log("7s200:err", err));
   client.on("close", () => {
     client.connect();
@@ -44,7 +45,7 @@ import cors from "cors";
 
   const io = new Server({
     cors: {
-      origin: ["http://localhost:3000", "https://www.client.movechess.com"],
+      origin: ["http://localhost:3000", "https://www.client.movechess.com", "https://client.movechess.com"],
     },
   }).listen(http);
 
