@@ -34,6 +34,7 @@ import jsonrpc from "@polkadot/types/interfaces/jsonrpc";
   // app.get("/get-game-V2", cors(corsOptions), gameController.getGamesV2);
   // app.use("/", cors(corsOptions), routes);
   app.use(cors(), routes);
+
   await client.connect().catch((err) => console.log("7s200:err", err));
   client.on("close", () => {
     client.connect();
