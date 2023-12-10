@@ -181,7 +181,6 @@ export const gameController = {
 
   loadGameV2: async (req, res) => {
     const { game_id } = req.query;
-    console.log("7s200:game", game_id);
     const query = { game_id: game_id };
 
     const { collection: gameCollection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);

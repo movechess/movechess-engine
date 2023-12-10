@@ -30,7 +30,7 @@ import { MongoClient } from "mongodb";
   };
 
   app.get("/ping", (req, res) => {
-    res.json("pong 11");
+    res.json("pong 12");
   });
   // app.get("/get-game-V2", cors(corsOptions), gameController.getGamesV2);
   // app.use("/", cors(corsOptions), routes);
@@ -163,6 +163,9 @@ import { MongoClient } from "mongodb";
       //   // io.to(board.game_id).emit("newMove", { from, to, board: board.board, turn: board.turn_player, fen: board.fen });
       // }
     });
+    socket.on("move", function (move) {
+      console.log("7s200:move:v2", move);
+    });
 
     // socket.on("joinGame", async function (data) {
     //   const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
@@ -246,10 +249,7 @@ import { MongoClient } from "mongodb";
     // });
 
     socket.on("disconnect", function () {
-      // if (currentCode) {
-      //   io.to(currentCode).emit("gameOverDisconnect");
-      //   // delete games[currentCode];
-      // }
+      console.log("7s200:socket:disconnect");
     });
   });
   function getMoveOptions(game: Chess, square: Square) {
