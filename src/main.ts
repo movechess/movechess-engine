@@ -30,7 +30,7 @@ import { MongoClient } from "mongodb";
   };
 
   app.get("/ping", (req, res) => {
-    res.json("pong 8");
+    res.json("pong 9");
   });
   // app.get("/get-game-V2", cors(corsOptions), gameController.getGamesV2);
   // app.use("/", cors(corsOptions), routes);
@@ -117,7 +117,7 @@ import { MongoClient } from "mongodb";
               if ((output.toJSON() as any).ok.userBPayable === true) {
                 const updateboard = {
                   $set: {
-                    player_2: (output.toJSON() as any).ok.userB !== DEFAULT_0X0_ADDRESS ? (output.toJSON() as any).ok.userB : "",
+                    player_2: (socket as any).user,
                     pays: {
                       player1: 10000000000000,
                       gameIndex: (board as any).pays.gameIndex,
