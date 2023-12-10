@@ -11,7 +11,7 @@ import jwt from "jsonwebtoken";
 import { dbCollection } from "./database/collection";
 import md5 from "md5";
 import { Chess, Chess as ChessV2, Square } from "./engine/chess2";
-import { TGame, gameController, getGasLimit, keyring } from "./router/game";
+import { DEFAULT_0X0_ADDRESS, TGame, gameController, getGasLimit, keyring } from "./router/game";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { ContractPromise } from "@polkadot/api-contract";
 import abi from "./abi/movechesscontract.json";
@@ -117,7 +117,7 @@ import { MongoClient } from "mongodb";
               if ((output.toJSON() as any).ok.userBPayable === true) {
                 const updateboard = {
                   $set: {
-                    player_2: (output.toJSON() as any).ok.userB,
+                    player_2: (output.toJSON() as any).ok.userB !== DEFAULT_0X0_ADDRESS ? (output.toJSON() as any).ok.userB : "",
                     pays: {
                       player1: 10000000000000,
                       gameIndex: (board as any).pays.gameIndex,
