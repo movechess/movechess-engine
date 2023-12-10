@@ -69,6 +69,7 @@ import { MongoClient } from "mongodb";
         return next();
       });
     } else {
+      console.log("7s200:socketerr:");
       return;
     }
   }).on("connection", (socket) => {
