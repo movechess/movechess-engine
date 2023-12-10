@@ -27,7 +27,7 @@ export type TGame = {
 };
 
 export const keyring = new Keyring({ type: "sr25519" });
-const DEFAULT_0X0_ADDRESS = "5HrN7fHLXWcFiXPwwtq2EkSGns9eMt5P7SpeTPewumZy6ftb";
+export const DEFAULT_0X0_ADDRESS = "5HrN7fHLXWcFiXPwwtq2EkSGns9eMt5P7SpeTPewumZy6ftb";
 
 export const gameController = {
   newGame: async (req, res) => {
