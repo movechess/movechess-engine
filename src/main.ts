@@ -220,33 +220,34 @@ import { MongoClient } from "mongodb";
       if (board.player_1.length > 0 && board.player_2.length > 0) {
         io.to(data.game_id).emit("start");
       }
-      if (board.player_1.length === 0 && board.player_2.length === 0) {
-        const updateDoc = {
-          $set: {
-            player_1: (socket as any).user,
-          },
-        };
-        await collection.findOneAndUpdate({ game_id: data.game_id }, updateDoc);
-        socket.join(data.game_id);
-      }
-      if (board.player_1.length > 0 && (socket as any).user !== board.player_1) {
-        const updateDoc = {
-          $set: {
-            player_2: (socket as any).user,
-          },
-        };
-        await collection.findOneAndUpdate({ game_id: data.game_id }, updateDoc);
-        socket.join(data.game_id);
-      }
-      if (board.player_2.length > 0 && (socket as any).user !== board.player_2) {
-        const updateDoc = {
-          $set: {
-            player_1: (socket as any).user,
-          },
-        };
-        await collection.findOneAndUpdate({ game_id: data.game_id }, updateDoc);
-        socket.join(data.game_id);
-      }
+      // if (board.player_1.length === 0 && board.player_2.length === 0) {
+      //   const updateDoc = {
+      //     $set: {
+      //       player_1: (socket as any).user,
+      //     },
+      //   };
+      //   await collection.findOneAndUpdate({ game_id: data.game_id }, updateDoc);
+      //   socket.join(data.game_id);
+      // }
+      // if (board.player_1.length > 0 && (socket as any).user !== board.player_1) {
+      //   const updateDoc = {
+      //     $set: {
+      //       player_2: (socket as any).user,
+      //     },
+      //   };
+      //   await collection.findOneAndUpdate({ game_id: data.game_id }, updateDoc);
+      //   socket.join(data.game_id);
+      // }
+      // if (board.player_2.length > 0 && (socket as any).user !== board.player_2) {
+      //   const updateDoc = {
+      //     $set: {
+      //       player_1: (socket as any).user,
+      //     },
+      //   };
+      //   await collection.findOneAndUpdate({ game_id: data.game_id }, updateDoc);
+      //   socket.join(data.game_id);
+      // }
+      socket.join(data.game_id);
     });
 
     socket.on("disconnect", function () {
