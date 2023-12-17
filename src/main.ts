@@ -174,7 +174,7 @@ import { MongoClient } from "mongodb";
 
       socket.join(board.game_id);
       if ((board as any).isPaymentMatch) {
-        if ((board as any).pays.player2 === 0) {
+        if (true) {
           console.log("7s200:join", (socket as any).user);
           // if (board.player_1 !== (socket as any).user && (board as any).pays.player1 === 10000000000000 && board.player_2 === "") {
 
