@@ -56,21 +56,21 @@ import { MongoClient } from "mongodb";
       const token = socket.handshake.headers.authorization.toString();
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decodedToken) => {
         if (err) {
-          console.log("7s200:socket:auth:err", err, decodedToken);
+          // console.log("7s200:socket:auth:err", err, decodedToken);
           return;
         }
         const { collection } = await dbCollection<any>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_USERS!);
         const userData = await collection.findOne({ address: decodedToken.address });
-        console.log("7s200:userData", userData);
+        // console.log("7s200:userData", userData);
         if (!userData) {
-          console.log("7s200:socket:auth:err:userData", userData, decodedToken);
+          // console.log("7s200:socket:auth:err:userData", userData, decodedToken);
           return;
         }
         (socket as any).user = userData.address;
         return next();
       });
     } else {
-      console.log("7s200:socketerr:");
+      // console.log("7s200:socketerr:");
       return;
     }
   }).on("connection", (socket) => {
@@ -100,16 +100,20 @@ import { MongoClient } from "mongodb";
       }
     });
     socket.on("move", async function (move) {
-      console.log("7s200:move:2");
+      // console.log("7s200:move:2");
       const { from, to, turn, address, isPromotion, fen, game_id } = move; //fake fen'
+      socket.join(game_id);
 
       const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
       const board = await collection.findOne({ game_id: game_id });
-      console.log("7s200:move:3", (socket as any).user, turn, game_id);
+      if (board.player_1 === "" || board.player_2 === "" || board.player_2 === DEFAULT_0X0_ADDRESS) {
+        return;
+      }
+      // console.log("7s200:move:3", (socket as any).user, turn, game_id);
       if ((board as any).isGameDraw || (board as any).isGameOver) {
         return;
       }
-      console.log("7s200:move:4");
+      // console.log("7s200:move:4");
       const chess = new ChessV2(fen);
       try {
         console.log("7s200:move:promotion");
@@ -125,7 +129,7 @@ import { MongoClient } from "mongodb";
 
       const isGameOver = chess.isGameOver();
       const isGameDraw = chess.isDraw();
-      console.log("7s200:move:5");
+      // console.log("7s200:move:5");
 
       const newBoard = {
         $set: {
@@ -137,24 +141,23 @@ import { MongoClient } from "mongodb";
           isGameOver: isGameOver,
         },
       };
-      console.log("7s200:move:6");
+      // console.log("7s200:move:6");
 
-      io.emit("newmove", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
-      console.log("7s200:move:7", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
+      io.to(game_id).emit("newmove", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
+      // console.log("7s200:move:7", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
 
       await collection
         .findOneAndUpdate({ game_id: board.game_id }, newBoard)
         .then((data) => {
           if (data) {
-            console.log("7s200:move:8");
-
+            // console.log("7s200:move:8");
             //  io.to(board.game_id).emit("newMove", { from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
           }
         })
         .catch((err) => {
-          console.log("7s200:err", err);
+          // console.log("7s200:err", err);
         });
-      console.log("7s200:move:9");
+      // console.log("7s200:move:9");
 
       // if ((board.turn_player !== turn && turn === "b" && (socket as any).user === board.player_1) || (board.turn_player !== turn && turn === "w" && (socket as any).user === board.player_2)) {
       //  // h
@@ -164,18 +167,15 @@ import { MongoClient } from "mongodb";
       //   // io.to(board.game_id).emit("newMove", { from, to, board: board.board, turn: board.turn_player, fen: board.fen });
       // }
     });
-    socket.on("move", function (move) {
-      console.log("7s200:move:v2", move);
-    });
 
     socket.on("joinGame", async function (data) {
       const { collection } = await dbCollection<TGame>(process.env.DB_MOVECHESS!, process.env.DB_MOVECHESS_COLLECTION_GAMES!);
       const board = await collection.findOne({ game_id: data.game_id });
 
       socket.join(board.game_id);
+
       if ((board as any).isPaymentMatch) {
         if (true) {
-          console.log("7s200:join", (socket as any).user);
           // if (board.player_1 !== (socket as any).user && (board as any).pays.player1 === 10000000000000 && board.player_2 === "") {
 
           // }
@@ -191,35 +191,34 @@ import { MongoClient } from "mongodb";
             const { result, output } = await contract.query.getGameInfo("5E7zwZHqCv53cWrFqfmaVBQ7u6dnWMR4dEdepAWBHAKx9LkH", { gasLimit: gasLimit2 }, (board as any).pays.gameIndex);
 
             if (result.isOk && output) {
-              console.log("7s200:", (socket as any).user, (output.toJSON() as any).ok);
-              if ((output.toJSON() as any).ok.userBPayable === true) {
-                const updateboard = {
-                  $set: {
-                    player_1: (output.toJSON() as any).ok.userA,
-                    player_2: (output.toJSON() as any).ok.userB,
-                    pays: {
-                      player1: 10000000000000,
-                      gameIndex: (board as any).pays.gameIndex,
-                      player2: 10000000000000,
-                    },
+              console.log("7s200:joingame", (socket as any).user, (output.toJSON() as any).ok);
+              const updateboard = {
+                $set: {
+                  player_1: (output.toJSON() as any).ok.userA,
+                  player_2: (output.toJSON() as any).ok.userB === DEFAULT_0X0_ADDRESS ? "" : (output.toJSON() as any).ok.userB,
+                  pays: {
+                    player1: 10000000000000,
+                    gameIndex: (board as any).pays.gameIndex,
+                    player2: (output.toJSON() as any).ok.userB === DEFAULT_0X0_ADDRESS ? 0 : 10000000000000,
                   },
-                };
-                await collection
-                  .findOneAndUpdate({ game_id: board.game_id }, updateboard)
-                  .then((data) => {
-                    console.log("7s200:data", data);
-                  })
-                  .catch((err) => {
-                    console.log("7s200:err", err);
-                  });
-              }
+                },
+              };
+              await collection
+                .findOneAndUpdate({ game_id: board.game_id }, updateboard)
+                .then((data) => {
+                  console.log("7s200:data", data);
+                  if ((output.toJSON() as any).ok.userA !== DEFAULT_0X0_ADDRESS && (output.toJSON() as any).ok.userB !== DEFAULT_0X0_ADDRESS) {
+                    io.to(data.game_id).emit("start", { start: true });
+                  }
+                })
+                .catch((err) => {
+                  console.log("7s200:err", err);
+                });
             }
           }
         }
       }
-      if (board.player_1.length > 0 && board.player_2.length > 0) {
-        io.to(data.game_id).emit("start");
-      }
+
       // if (board.player_1.length === 0 && board.player_2.length === 0) {
       //   const updateDoc = {
       //     $set: {
