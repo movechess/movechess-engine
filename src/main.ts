@@ -99,6 +99,7 @@ import { MongoClient } from "mongodb";
         socket.join(board.game_id);
       }
     });
+
     socket.on("move", async function (move) {
       // console.log("7s200:move:2");
       const { from, to, turn, address, isPromotion, fen, game_id } = move; //fake fen'
@@ -121,6 +122,7 @@ import { MongoClient } from "mongodb";
           chess.move({
             from: from,
             to: to,
+            // promotion: "q",
           });
         }
       } catch (error) {
@@ -247,6 +249,79 @@ import { MongoClient } from "mongodb";
       //   socket.join(data.game_id);
       // }
       socket.join(data.game_id);
+    });
+
+    socket.on("tournament", async function (data) {
+      const { collection } = await dbCollection<any>(process.env.DB_MOVECHESS!, "tournament");
+      // const board = await collection.find().toArray();
+      // console.log("7s200:joinTournament:board", board);
+      if (data.player1 && data.player2 && data.tournamnetIndex) {
+        const board = await collection.findOne({ player1: data.player1, player2: data.player2, tournamentIndex: data.tournamentIndex, game_id: `${data.player1}-${data.player2}-${data.tournamentIndex}` });
+        if (!board) {
+          const chess = new ChessV2();
+          const board = {
+            board: chess.board(),
+            fen: chess.fen(),
+            player1: data.player1,
+            player2: data.player2,
+            turn_player: chess.turn(),
+            game_id: `${data.player1}-${data.player2}-${data.tournamentIndex}`,
+          };
+          const newBoard = await collection.insertOne(board);
+          socket.join(`${data.player1}-${data.player2}-${data.tournamentIndex}`);
+        }
+      }
+    });
+
+    socket.on("jointournamentgame", async function (data) {
+      socket.join(data.game_id);
+    });
+    socket.on("tournamentmove", async function (move) {
+      const { from, to, turn, address, isPromotion, fen, game_id } = move; //fake fen'
+      socket.join(game_id);
+
+      const { collection } = await dbCollection<any>(process.env.DB_MOVECHESS!, "tournament");
+      const board = await collection.findOne({ game_id: game_id });
+      console.log("7s200:board", board);
+      if (board.player1 === "" || board.player2 === "" || board.player2 === DEFAULT_0X0_ADDRESS) {
+        return;
+      }
+      if ((board as any).isGameDraw || (board as any).isGameOver) {
+        return;
+      }
+      const chess = new ChessV2(fen);
+      try {
+        console.log("7s200:move:promotion");
+        if (!isPromotion) {
+          chess.move({
+            from: from,
+            to: to,
+            // promotion: "q",
+          });
+        }
+      } catch (error) {
+        console.log("7s200:move:err");
+      }
+      const isGameOver = chess.isGameOver();
+      const isGameDraw = chess.isDraw();
+      const newBoard = {
+        $set: {
+          board: chess.board(),
+          turn_player: chess.turn(),
+          move_number: chess.moveNumber(),
+          fen: chess.fen(),
+          isGameDraw: isGameDraw,
+          isGameOver: isGameOver,
+        },
+      };
+      io.to(game_id).emit("tournamentnewmove", { game_id: game_id, from, to, board: chess.board(), turn: chess.turn(), fen: chess.fen() });
+      await collection
+        .findOneAndUpdate({ game_id: board.game_id }, newBoard)
+        .then((data) => {
+          if (data) {
+          }
+        })
+        .catch((err) => {});
     });
 
     socket.on("disconnect", function () {

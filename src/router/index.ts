@@ -2,6 +2,7 @@ import { Router } from "express";
 import { gameController } from "./game";
 import { userController } from "./user";
 import { authenToken } from "../auth/auth";
+import { tournamentController } from "./tournament";
 
 const routes = new Router();
 
@@ -18,5 +19,7 @@ routes.post("/new-game-v2", authenToken, gameController.newGameV2);
 routes.get("/load-game-v2", gameController.loadGameV2);
 routes.get("/get-game-v2", authenToken, gameController.getGamesV2);
 routes.post("/update-winner-v2", authenToken, gameController.updateWinnerV2);
+
+routes.get("/load-tournament-game-v2", tournamentController.loadTournamentGameV2);
 
 export default routes;
