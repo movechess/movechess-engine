@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { gameController } from "./game";
-import { userController } from "./user";
+import { gameController } from "../controller/game";
+import { userController } from "../controller/user";
 import { authenToken } from "../auth/auth";
-import { tournamentController } from "./tournament";
+import { tournamentController } from "../controller/tournament";
+import {airdropController} from "../controller/airdrop";
 
 const routes = new Router();
 
@@ -21,5 +22,11 @@ routes.get("/get-game-v2", authenToken, gameController.getGamesV2);
 routes.post("/update-winner-v2", authenToken, gameController.updateWinnerV2);
 
 routes.get("/load-tournament-game-v2", tournamentController.loadTournamentGameV2);
+
+// Airdrop
+routes.get("/airdrop/quest/:address", airdropController.getAirdropProgress)
+routes.post("/airdrop/:address/discord/:discordId", airdropController.connectDiscord);
+routes.get("/airdrop/discord/auth", airdropController.discordAuth);
+routes.get("/airdrop/discord/auth/callback", airdropController.discordAuthCallback);
 
 export default routes;
