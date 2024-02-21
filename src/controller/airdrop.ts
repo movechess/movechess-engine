@@ -1,10 +1,13 @@
 import { dbCollection } from "../database/collection";
 import axios from 'axios';
-import {random} from "lodash";
+import {ReturnDocument} from "mongodb";
 export type TQuest = {
     wallet_address: string,
-    discord_id: string,
-    discord_roles: any
+    discord_info: {
+        id: string,
+        user_name: string,
+        is_have_require_role: boolean
+    }
 };
 export const airdropController = {
     getAirdropProgress: async (req, res) => {
@@ -18,8 +21,11 @@ export const airdropController = {
         if (!quest) {
             const newQuest: TQuest = {
                 wallet_address: address,
-                discord_id: null,
-                discord_roles: null
+                discord_info: {
+                    id: null,
+                    user_name: null,
+                    is_have_require_role: false
+                }
             }
 
             await collection.insertOne(newQuest);
@@ -30,9 +36,31 @@ export const airdropController = {
     },
 
     connectDiscord: async (req, res) => {
-        const { address, discordId } = req.params;
+        const { address, discordId, discordUserName } = req.body;
         const query = { wallet_address: address };
         const { collection } = await dbCollection<TQuest>(process.env.DB_AIRDROP!, process.env.DB_AIRDROP_COLLECTION_QUEST!);
+        const quest = await collection.findOne(query);
+        if (!quest) {
+            throw new Error("Unauthorized");
+        }
+        if (quest.discord_info.id) {
+            throw new Error("Already connect discord");
+        }
+        const updateDoc = {
+            $set: {
+                wallet_address: address,
+                discord_info: {
+                    id: discordId,
+                    user_name: discordUserName,
+                    is_have_require_role: false
+                }
+            },
+        };
+        const options = {
+            returnDocument: ReturnDocument.AFTER
+        };
+        const updateQuest = await collection.findOneAndUpdate(query, updateDoc, options);
+        return res.json(updateQuest);
     },
 
     discordAuth: async (req, res) => {
@@ -67,15 +95,22 @@ export const airdropController = {
 
         const accessToken = authResponse.data.access_token;
 
-        const userResponse = await axios.get(`https://discord.com/api/users/@me/guilds/${process.env.DISCORD_SERVER_ID}/member`, {
+        const userResponse = await axios.get(`https://discord.com/api/users/@me`, {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
                 ...headers
             }
         });
-        const isUserHaveRole = userResponse.data.roles.includes(process.env.DISCORD_PAWN_ROLE_ID);
+        console.log(userResponse);
+        // const userResponse = await axios.get(`https://discord.com/api/users/@me/guilds/${process.env.DISCORD_SERVER_ID}/member`, {
+        //     headers: {
+        //         Authorization: `Bearer ${accessToken}`,
+        //         ...headers
+        //     }
+        // });
+        // const isUserHaveRole = userResponse.data.roles.includes(process.env.DISCORD_PAWN_ROLE_ID);
         // TODO: Save db
-        console.log(isUserHaveRole);
+
         res.redirect("http://localhost:3000")
     },
 };
