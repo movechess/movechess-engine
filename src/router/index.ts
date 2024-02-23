@@ -24,8 +24,9 @@ routes.post("/update-winner-v2", authenToken, gameController.updateWinnerV2);
 routes.get("/load-tournament-game-v2", tournamentController.loadTournamentGameV2);
 
 // Airdrop
-routes.post("/airdrop/quest/:address", airdropController.getAirdropProgress)
+routes.post("/airdrop/quest/:address", airdropController.getAirdropQuestProgress)
 routes.post("/airdrop/discord", airdropController.connectDiscord);
+routes.post("/airdrop/discord/role/verification", airdropController.verifyDiscordRole)
 routes.get("/airdrop/discord/auth", airdropController.discordAuth);
 routes.get("/airdrop/discord/auth/callback", airdropController.discordAuthCallback);
 

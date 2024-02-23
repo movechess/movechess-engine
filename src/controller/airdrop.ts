@@ -6,11 +6,13 @@ export type TQuest = {
     discord_info: {
         id: string,
         user_name: string,
+        avatar: string,
+        email: string,
         is_have_require_role: boolean
     }
 };
 export const airdropController = {
-    getAirdropProgress: async (req, res) => {
+    getAirdropQuestProgress: async (req, res) => {
         const { address } = req.params;
         const query = { wallet_address: address };
         const { collection } = await dbCollection<TQuest>(process.env.DB_AIRDROP!, process.env.DB_AIRDROP_COLLECTION_QUEST!);
@@ -24,6 +26,8 @@ export const airdropController = {
                 discord_info: {
                     id: null,
                     user_name: null,
+                    avatar: null,
+                    email: null,
                     is_have_require_role: false
                 }
             }
@@ -31,12 +35,16 @@ export const airdropController = {
             await collection.insertOne(newQuest);
             return res.json(newQuest);
         }
-
+        // TODO: Generate jwt containt address and save cookie
         return res.json(quest);
     },
 
     connectDiscord: async (req, res) => {
-        const { address, discordId, discordUserName } = req.body;
+        const { address } = req.body;
+        const accessToken = req.cookies.discordAccessToken;
+        if (!address || !accessToken) {
+            return res.json({message: "Unauthorized"});
+        }
         const query = { wallet_address: address };
         const { collection } = await dbCollection<TQuest>(process.env.DB_AIRDROP!, process.env.DB_AIRDROP_COLLECTION_QUEST!);
         const quest = await collection.findOne(query);
@@ -46,15 +54,63 @@ export const airdropController = {
         if (quest.discord_info.id) {
             throw new Error("Already connect discord");
         }
+
+        const headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept-Encoding': 'application/x-www-form-urlencoded'
+        };
+
+        const userResponse = await axios.get(`https://discord.com/api/users/@me`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                ...headers
+            }
+        });
+        const discordInfo = userResponse.data;
+
         const updateDoc = {
             $set: {
                 wallet_address: address,
                 discord_info: {
-                    id: discordId,
-                    user_name: discordUserName,
+                    id: discordInfo.id,
+                    user_name: discordInfo.username,
+                    avatar: discordInfo.avatar,
+                    email: discordInfo.email,
                     is_have_require_role: false
                 }
             },
+        };
+        const options = {
+            returnDocument: ReturnDocument.AFTER
+        };
+        const updateQuest = await collection.findOneAndUpdate(query, updateDoc, options);
+        return res.json(updateQuest);
+    },
+
+    verifyDiscordRole: async (req, res) => {
+        const { address } = req.body;
+        const accessToken = req.cookies.discordAccessToken;
+        if (!address || !accessToken) {
+            return res.json({message: "Unauthorized"});
+        }
+        const headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept-Encoding': 'application/x-www-form-urlencoded'
+        };
+        const userResponse = await axios.get(`https://discord.com/api/users/@me/guilds/${process.env.DISCORD_SERVER_ID}/member`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                ...headers
+            }
+        });
+        const isUserHaveRole = userResponse.data.roles.includes(process.env.DISCORD_PAWN_ROLE_ID);
+        console.log(isUserHaveRole);
+        const query = { wallet_address: address };
+        const { collection } = await dbCollection<TQuest>(process.env.DB_AIRDROP!, process.env.DB_AIRDROP_COLLECTION_QUEST!);
+        const updateDoc = {
+            $set: {
+                "discord_info.is_have_require_role": isUserHaveRole
+            }
         };
         const options = {
             returnDocument: ReturnDocument.AFTER
@@ -94,23 +150,8 @@ export const airdropController = {
         );
 
         const accessToken = authResponse.data.access_token;
+        res.cookie('discordAccessToken', accessToken);
 
-        const userResponse = await axios.get(`https://discord.com/api/users/@me`, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                ...headers
-            }
-        });
-        console.log(userResponse);
-        // const userResponse = await axios.get(`https://discord.com/api/users/@me/guilds/${process.env.DISCORD_SERVER_ID}/member`, {
-        //     headers: {
-        //         Authorization: `Bearer ${accessToken}`,
-        //         ...headers
-        //     }
-        // });
-        // const isUserHaveRole = userResponse.data.roles.includes(process.env.DISCORD_PAWN_ROLE_ID);
-        // TODO: Save db
-
-        res.redirect("http://localhost:3000")
+        res.redirect(process.env.AIRDROP_PAGE_URL);
     },
 };

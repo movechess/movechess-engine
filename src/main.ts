@@ -2,6 +2,7 @@ import express from "express";
 import { client } from "./database";
 import routes from "./router";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -23,6 +24,7 @@ import { MongoClient } from "mongodb";
   app.use(cors());
   app.use(express.json());
   app.use(bodyParser.urlencoded({ extended: false }));
+  app.use(cookieParser());
 
   let corsOptions = {
     origin: ["https://www.client.movechess.com", "https://client.movechess.com"],
