@@ -1,11 +1,11 @@
-import {dbCollection} from "../database/collection";
 import axios from 'axios';
-import {ReturnDocument} from "mongodb";
 import jwt from "jsonwebtoken";
-import {TQuest} from "../model/Quest";
-import {DbService} from "../service/DbService";
+import {TQuest} from "../models/quest.model";
+import {DbService} from "../services/db.service";
+import {DiscordService} from "../services/discord.service";
 
 const questService = new DbService(process.env.DB_AIRDROP!, process.env.DB_AIRDROP_COLLECTION_QUEST!);
+const discordService = new DiscordService();
 export const airdropController = {
     connectWallet: async (req, res) => {
         const { address } = req.body;
@@ -39,32 +39,14 @@ export const airdropController = {
         if (!req.query.code) throw new Error('Code not provided.');
         const { code } = req.query;
 
-        const params = new URLSearchParams({
-            client_id: process.env.DISCORD_CLIENT_ID,
-            client_secret: process.env.DISCORD_CLIENT_SECRET,
-            grant_type: 'authorization_code',
-            code,
-            redirect_uri: process.env.DISCORD_REDIRECT_URI
-        });
-
-        const headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept-Encoding': 'application/x-www-form-urlencoded'
-        };
-
-        const authResponse = await axios.post(
-            'https://discord.com/api/v10/oauth2/token',
-            params,
-            {
-                headers
-            }
-        );
-
-        const accessToken = authResponse.data.access_token;
-        const jwtToken = jwt.sign({ discordAccessToken: accessToken }, process.env.ACCESS_TOKEN_SECRET, {
-            expiresIn: "24h",
-        });
-        res.cookie('jwtToken', jwtToken);
+        const authResponse = await discordService.getToken(code);
+        if (authResponse) {
+            const accessToken = authResponse.data.access_token;
+            const jwtToken = jwt.sign({ discordAccessToken: accessToken }, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: "24h",
+            });
+            res.cookie('jwtToken', jwtToken);
+        }
 
         res.redirect('http://localhost:3000/transfer');
     },
@@ -85,44 +67,34 @@ export const airdropController = {
             return res.json(quest);
         }
 
-        const headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept-Encoding': 'application/x-www-form-urlencoded'
-        };
         // Fetch discord info
-        const discordResponse = await axios.get(`https://discord.com/api/users/@me`, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                ...headers
+        const discordResponse = await discordService.getMe(accessToken);
+
+        if (discordResponse) {
+            const discordInfo = discordResponse.data;
+
+            // Check is discord account already connect with another wallet
+            quest = await questService.findOne({ 'discord_info.id': discordInfo.id });
+            if (quest) {
+                throw new Error("Already connect with another wallet");
             }
-        });
-        // Fetch discord info fail
-        if (!discordResponse?.data) {
-            throw new Error("Unauthorized");
-        }
-        const discordInfo = discordResponse.data;
 
-        // Check is discord account already connect with another wallet
-        quest = await questService.findOne({ 'discord_info.id': discordInfo.id });
-        if (quest) {
-            throw new Error("Discord account already connect with another" +
-                " wallet");
+            const updateDoc = {
+                $set: {
+                    wallet_address: address,
+                    discord_info: {
+                        id: discordInfo.id,
+                        user_name: discordInfo.username,
+                        avatar: discordInfo.avatar,
+                        email: discordInfo.email,
+                        is_have_require_role: false
+                    }
+                },
+            };
+            const updateQuest = await questService.findOneAndUpdate(query, updateDoc);
+            return res.json(updateQuest);
         }
-
-        const updateDoc = {
-            $set: {
-                wallet_address: address,
-                discord_info: {
-                    id: discordInfo.id,
-                    user_name: discordInfo.username,
-                    avatar: discordInfo.avatar,
-                    email: discordInfo.email,
-                    is_have_require_role: false
-                }
-            },
-        };
-        const updateQuest = await questService.findOneAndUpdate(query, updateDoc);
-        return res.json(updateQuest);
+        return res.json(quest);
     },
 
     inviteDiscord: async (req, res) => {
@@ -145,19 +117,10 @@ export const airdropController = {
             return res.json(quest);
         }
 
-        const headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept-Encoding': 'application/x-www-form-urlencoded'
-        };
-        const discordResponse = await axios.get(`https://discord.com/api/users/@me/guilds/${process.env.DISCORD_SERVER_ID}/member`, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                ...headers
-            }
-        });
-        const isUserHaveRole = discordResponse.data.roles.includes(process.env.DISCORD_PAWN_ROLE_ID);
+        const discordResponse = await discordService.getGuildMemberInfo(accessToken);
+        if (discordResponse) {
+            const isUserHaveRole = discordResponse.data.roles.includes(process.env.DISCORD_PAWN_ROLE_ID);
 
-        if (isUserHaveRole) {
             const updateDoc = {
                 $set: {
                     'discord_info.is_have_require_role': isUserHaveRole
