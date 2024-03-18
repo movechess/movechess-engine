@@ -24,6 +24,7 @@ routes.post("/update-winner-v2", authenToken, gameController.updateWinnerV2);
 routes.get("/load-tournament-game-v2", tournamentController.loadTournamentGameV2);
 
 // Airdrop
+// DISCORD API
 // Connect to wallet
 routes.post("/airdrop/quest/wallet", airdropController.connectWallet)
 // Discord OAuth
@@ -32,8 +33,16 @@ routes.get("/airdrop/discord/auth", airdropController.discordAuth);
 routes.get("/airdrop/discord/auth/callback", airdropController.discordAuthCallback);
 // Connect to discord
 routes.post("/airdrop/quest/discord", airdropController.connectDiscord);
+// Join discord server
+routes.get("/airdrop/discord/invite", airdropController.inviteDiscord);
 // Verify discord role
 routes.post("/airdrop/discord/role/verification", airdropController.verifyDiscordRole)
+
+// TWITTER API
+// Twitter OAuth
+routes.get("/airdrop/twitter/auth", airdropController.twitterAuth)
+// Twitter OAuth callback
+routes.get("/airdrop/twitter/auth/callback", airdropController.twitterCallBack);
 
 
 export default routes;
