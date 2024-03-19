@@ -1,11 +1,12 @@
-import axios from 'axios';
 import jwt from "jsonwebtoken";
 import {TQuest} from "../models/quest.model";
 import {DbService} from "../services/db.service";
 import {DiscordService} from "../services/discord.service";
+import {TwitterService} from "../services/twitter.service";
 
 const questService = new DbService(process.env.DB_AIRDROP!, process.env.DB_AIRDROP_COLLECTION_QUEST!);
 const discordService = new DiscordService();
+const twitterService = new TwitterService();
 export const airdropController = {
     connectWallet: async (req, res) => {
         const { address } = req.body;
@@ -21,6 +22,10 @@ export const airdropController = {
                     avatar: null,
                     email: null,
                     is_have_require_role: false
+                },
+                twitter_info: {
+                    id: null,
+                    user_name: null,
                 }
             }
 
@@ -45,15 +50,15 @@ export const airdropController = {
             const jwtToken = jwt.sign({ discordAccessToken: accessToken }, process.env.ACCESS_TOKEN_SECRET, {
                 expiresIn: "24h",
             });
-            res.cookie('jwtToken', jwtToken);
+            res.cookie('discordJwt', jwtToken);
         }
 
-        res.redirect('http://localhost:3000/transfer');
+        res.redirect(process.env.AIRDROP_PAGE_URL);
     },
 
     connectDiscord: async (req, res) => {
-        const { address, jwtToken } = req.body;
-        const tokenClaim = await jwt.verify(jwtToken, process.env.ACCESS_TOKEN_SECRET);
+        const { address, discordJwt } = req.body;
+        const tokenClaim = await jwt.verify(discordJwt, process.env.ACCESS_TOKEN_SECRET);
         const accessToken = tokenClaim.discordAccessToken;
         const query = { wallet_address: address };
         let quest = await questService.findOne(query);
@@ -103,8 +108,8 @@ export const airdropController = {
     },
 
     verifyDiscordRole: async (req, res) => {
-        const { address, jwtToken } = req.body;
-        const tokenClaim = await jwt.verify(jwtToken, process.env.ACCESS_TOKEN_SECRET);
+        const { address, discordJwt } = req.body;
+        const tokenClaim = await jwt.verify(discordJwt, process.env.ACCESS_TOKEN_SECRET);
         const accessToken = tokenClaim.discordAccessToken;
         const query = { wallet_address: address };
         const quest = await questService.findOne(query);
@@ -123,7 +128,10 @@ export const airdropController = {
 
             const updateDoc = {
                 $set: {
-                    'discord_info.is_have_require_role': isUserHaveRole
+                    wallet_address: address,
+                    discord_info: {
+                        is_have_require_role: isUserHaveRole
+                    }
                 },
             };
 
@@ -141,36 +149,61 @@ export const airdropController = {
     twitterCallBack: async (req, res) => {
         if (!req.query.code) throw new Error('Code not provided.');
         const { code } = req.query;
-        console.log(code);
+        const response = await twitterService.getAuthClient().requestAccessToken(code as string);
+        console.log(response);
+        // const twitterResponse = await twitterService.getToken(code);
+        // console.log(twitterResponse);
+        // if (twitterResponse) {
+        //     const accessToken = twitterResponse.data.access_token;
+        //     const jwtToken = jwt.sign({ twitterAccessToken: accessToken }, process.env.ACCESS_TOKEN_SECRET, {
+        //         expiresIn: "24h",
+        //     });
+        //     res.cookie('twitterJwt', jwtToken);
+        //     console.log(jwtToken);
+        // }
 
-        const params = new URLSearchParams({
-            client_id: process.env.TWITTER_CLIENT_ID,
-            code_verifier: 'challenge',
-            grant_type: 'authorization_code',
-            code,
-            redirect_uri: process.env.TWITTER_REDIRECT_URI
-        });
+        res.redirect(process.env.AIRDROP_PAGE_URL);
+    },
 
-        const headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept-Encoding': 'application/x-www-form-urlencoded'
-        };
+    connectTwitter: async (req, res) => {
+        const { address, twitterJwt } = req.body;
+        const tokenClaim = await jwt.verify(twitterJwt, process.env.ACCESS_TOKEN_SECRET);
+        const accessToken = tokenClaim.twitterAccessToken;
+        const query = { wallet_address: address };
+        let quest = await questService.findOne(query);
 
-        const authResponse = await axios.post(
-            'https://api.twitter.com/2/oauth2/token',
-            params,
-            {
-                headers
+        // Not connect wallet yet
+        if (!quest) {
+            throw new Error("Unauthorized");
+        }
+        // Already connect twitter
+        if (quest.twitter_info.id) {
+            return res.json(quest);
+        }
+
+        // Fetch discord info
+        const twitterResponse = await twitterService.getMe(accessToken);
+        if (twitterResponse) {
+            const twitterInfo = twitterResponse.data.data;
+
+            // Check is discord account already connect with another wallet
+            quest = await questService.findOne({ 'twitter_info.id': twitterInfo.id });
+            if (quest) {
+                throw new Error("Already connect with another wallet");
             }
-        );
-        console.log(authResponse);
 
-        const accessToken = authResponse.data.access_token;
-        const jwtToken = jwt.sign({ discordAccessToken: accessToken }, process.env.ACCESS_TOKEN_SECRET, {
-            expiresIn: "24h",
-        });
-        res.cookie('jwtToken', jwtToken);
-
-        res.redirect('http://localhost:3000?code=' + code);
+            const updateDoc = {
+                $set: {
+                    wallet_address: address,
+                    twitter_info: {
+                        id: twitterInfo.id,
+                        user_name: twitterInfo.username,
+                    }
+                },
+            };
+            const updateQuest = await questService.findOneAndUpdate(query, updateDoc);
+            return res.json(updateQuest);
+        }
+        return res.json(quest);
     },
 };

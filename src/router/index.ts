@@ -43,6 +43,8 @@ routes.post("/airdrop/discord/role/verification", airdropController.verifyDiscor
 routes.get("/airdrop/twitter/auth", airdropController.twitterAuth)
 // Twitter OAuth callback
 routes.get("/airdrop/twitter/auth/callback", airdropController.twitterCallBack);
+// Connect to Twitter
+routes.post("/airdrop/quest/twitter", airdropController.connectTwitter);
 
 
 export default routes;

@@ -6,5 +6,9 @@ export type TQuest = {
         avatar: string,
         email: string,
         is_have_require_role: boolean // Check join discord server and get role
+    },
+    twitter_info : {
+        id: string, // Check connect twitter
+        user_name: string,
     }
 };
