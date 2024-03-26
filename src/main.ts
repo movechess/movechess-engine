@@ -11,7 +11,7 @@ import jwt from "jsonwebtoken";
 import { dbCollection } from "./database/collection";
 import md5 from "md5";
 import { Chess, Chess as ChessV2, Square } from "./engine/chess2";
-import { DEFAULT_0X0_ADDRESS, TGame, gameController, getGasLimit, keyring } from "./router/game";
+import { DEFAULT_0X0_ADDRESS, TGame, gameController, getGasLimit, keyring } from "./controller/game";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { ContractPromise } from "@polkadot/api-contract";
 import abi from "./abi/movechesscontract.json";

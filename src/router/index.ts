@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { gameController } from "./game";
-import { userController } from "./user";
+import { gameController } from "../controller/game";
+import { userController } from "../controller/user";
 import { authenToken } from "../auth/auth";
-import { tournamentController } from "./tournament";
+import { tournamentController } from "../controller/tournament";
+import {airdropController} from "../controller/airdrop";
 
 const routes = new Router();
 
@@ -21,5 +22,34 @@ routes.get("/get-game-v2", authenToken, gameController.getGamesV2);
 routes.post("/update-winner-v2", authenToken, gameController.updateWinnerV2);
 
 routes.get("/load-tournament-game-v2", tournamentController.loadTournamentGameV2);
+
+// Airdrop
+// Connect to wallet
+routes.post("/airdrop/quest/wallet", airdropController.connectWallet)
+
+// DISCORD API
+// Discord OAuth
+routes.get("/airdrop/discord/auth", airdropController.discordAuth);
+// Discord OAuth callback
+routes.get("/airdrop/discord/auth/callback", airdropController.discordAuthCallback);
+// Connect to discord
+routes.post("/airdrop/quest/discord", airdropController.connectDiscord);
+// Join discord server
+routes.get("/airdrop/discord/invite", airdropController.inviteDiscord);
+// Verify discord role
+routes.post("/airdrop/discord/role/verification", airdropController.verifyDiscordRole)
+
+// TWITTER API
+// Twitter OAuth
+routes.get("/airdrop/twitter/auth", airdropController.twitterAuth)
+// Twitter OAuth callback
+routes.get("/airdrop/twitter/auth/callback", airdropController.twitterCallBack);
+// Connect to Twitter
+routes.post("/airdrop/quest/twitter", airdropController.connectTwitter);
+// Follow twitter
+routes.post("/airdrop/twitter/follow", airdropController.followTwitter);
+// Tweet
+routes.post("/airdrop/twitter/tweet", airdropController.tweetTwitter);
+
 
 export default routes;
