@@ -7,6 +7,16 @@ import {TwitterService} from "../services/twitter.service";
 const questService = new DbService(process.env.DB_AIRDROP!, process.env.DB_AIRDROP_COLLECTION_QUEST!);
 const discordService = new DiscordService();
 const twitterService = new TwitterService();
+const convertResponse = (quest: TQuest) => {
+    return {
+        isConnectWallet: !!quest.wallet_address,
+        isConnectDiscord: quest.discord_info.user_name,
+        isHaveDiscordRole: quest.discord_info.is_have_require_role,
+        isConnectTwitter: quest.twitter_info.user_name,
+        isFollowTwitter: quest.twitter_info.is_follower,
+        isTweet: !!quest.twitter_info.tweet_id,
+    }
+}
 export const airdropController = {
     connectWallet: async (req, res) => {
         const { address } = req.body;
@@ -26,13 +36,15 @@ export const airdropController = {
                 twitter_info: {
                     id: null,
                     user_name: null,
+                    is_follower: false,
+                    tweet_id: null
                 }
             }
 
             await questService.insertOne(newQuest);
-            return res.json(newQuest);
+            return res.json(convertResponse(newQuest));
         }
-        return res.json(quest);
+        return res.json(convertResponse(quest));
     },
 
     discordAuth: async (req, res) => {
@@ -69,7 +81,7 @@ export const airdropController = {
         }
         // Already connect discord
         if (quest.discord_info.id) {
-            return res.json(quest);
+            return res.json(convertResponse(quest));
         }
 
         // Fetch discord info
@@ -97,9 +109,9 @@ export const airdropController = {
                 },
             };
             const updateQuest = await questService.findOneAndUpdate(query, updateDoc);
-            return res.json(updateQuest);
+            return res.json(convertResponse(updateQuest));
         }
-        return res.json(quest);
+        return res.json(convertResponse(quest));
     },
 
     inviteDiscord: async (req, res) => {
@@ -119,7 +131,7 @@ export const airdropController = {
         }
         // Not connect discord yet
         if (!quest.discord_info.id) {
-            return res.json(quest);
+            return res.json(convertResponse(quest));
         }
 
         const discordResponse = await discordService.getGuildMemberInfo(accessToken);
@@ -128,17 +140,14 @@ export const airdropController = {
 
             const updateDoc = {
                 $set: {
-                    wallet_address: address,
-                    discord_info: {
-                        is_have_require_role: isUserHaveRole
-                    }
+                    'discord_info.is_have_require_role': isUserHaveRole
                 },
             };
 
             const updateQuest = await questService.findOneAndUpdate(query, updateDoc);
-            return res.json(updateQuest);
+            return res.json(convertResponse(updateQuest));
         }
-        return res.json(quest);
+        return res.json(convertResponse(quest));
     },
 
     twitterAuth: async (req, res) => {
@@ -149,18 +158,16 @@ export const airdropController = {
     twitterCallBack: async (req, res) => {
         if (!req.query.code) throw new Error('Code not provided.');
         const { code } = req.query;
-        const response = await twitterService.getAuthClient().requestAccessToken(code as string);
-        console.log(response);
-        // const twitterResponse = await twitterService.getToken(code);
-        // console.log(twitterResponse);
-        // if (twitterResponse) {
-        //     const accessToken = twitterResponse.data.access_token;
-        //     const jwtToken = jwt.sign({ twitterAccessToken: accessToken }, process.env.ACCESS_TOKEN_SECRET, {
-        //         expiresIn: "24h",
-        //     });
-        //     res.cookie('twitterJwt', jwtToken);
-        //     console.log(jwtToken);
-        // }
+        const twitterResponse = await twitterService.getToken(code);
+        console.log(twitterResponse);
+        if (twitterResponse) {
+            const accessToken = twitterResponse.data.access_token;
+            const jwtToken = jwt.sign({ twitterAccessToken: accessToken }, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: "24h",
+            });
+            res.cookie('twitterJwt', jwtToken);
+            console.log(jwtToken);
+        }
 
         res.redirect(process.env.AIRDROP_PAGE_URL);
     },
@@ -178,7 +185,7 @@ export const airdropController = {
         }
         // Already connect twitter
         if (quest.twitter_info.id) {
-            return res.json(quest);
+            return res.json(convertResponse(quest));
         }
 
         // Fetch discord info
@@ -198,12 +205,38 @@ export const airdropController = {
                     twitter_info: {
                         id: twitterInfo.id,
                         user_name: twitterInfo.username,
+                        is_follower: false,
+                        tweet_id: null
                     }
                 },
             };
             const updateQuest = await questService.findOneAndUpdate(query, updateDoc);
-            return res.json(updateQuest);
+            return res.json(convertResponse(updateQuest));
         }
-        return res.json(quest);
+        return res.json(convertResponse(quest));
     },
+
+    followTwitter: async (req, res) => {
+        const { address } = req.body;
+        const query = { wallet_address: address };
+        const updateDoc = {
+            $set: {
+                'twitter_info.is_follower': true
+            },
+        };
+        const updateQuest = await questService.findOneAndUpdate(query, updateDoc);
+        return res.json(convertResponse(updateQuest));
+    },
+
+    tweetTwitter: async (req, res) => {
+        const { address, tweetId } = req.body;
+        const query = { wallet_address: address };
+        const updateDoc = {
+            $set: {
+                'twitter_info.tweet_id': tweetId
+            },
+        };
+        const updateQuest = await questService.findOneAndUpdate(query, updateDoc);
+        return res.json(convertResponse(updateQuest));
+    }
 };

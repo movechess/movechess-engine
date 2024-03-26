@@ -10,5 +10,7 @@ export type TQuest = {
     twitter_info : {
         id: string, // Check connect twitter
         user_name: string,
+        is_follower: boolean,
+        tweet_id: string,
     }
 };
