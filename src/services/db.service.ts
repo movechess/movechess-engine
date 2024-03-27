@@ -34,4 +34,9 @@ export class DbService {
         const collection = await this.getCollection();
         return await collection.findOneAndUpdate(query, updateDoc, options);
     }
+
+    async updateOne(query: Filter<Document>, updateDoc: UpdateFilter<Document>) {
+        const collection = await this.getCollection();
+        return await collection.updateOne(query, updateDoc);
+    }
 }

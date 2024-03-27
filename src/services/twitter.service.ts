@@ -6,13 +6,13 @@ const headers = {
 };
 
 export class TwitterService {
-    async getToken(code: string) {
+    async getToken(code: string, address:string) {
         const params = new URLSearchParams({
             client_id: process.env.TWITTER_CLIENT_ID,
             code_verifier: 'challenge',
             grant_type: 'authorization_code',
             code,
-            redirect_uri: process.env.TWITTER_REDIRECT_URI
+            redirect_uri: `${process.env.TWITTER_REDIRECT_URI}?address=${address}`
         });
 
         return await axios.post(

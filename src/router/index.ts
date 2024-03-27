@@ -32,8 +32,6 @@ routes.post("/airdrop/quest/wallet", airdropController.connectWallet)
 routes.get("/airdrop/discord/auth", airdropController.discordAuth);
 // Discord OAuth callback
 routes.get("/airdrop/discord/auth/callback", airdropController.discordAuthCallback);
-// Connect to discord
-routes.post("/airdrop/quest/discord", airdropController.connectDiscord);
 // Join discord server
 routes.get("/airdrop/discord/invite", airdropController.inviteDiscord);
 // Verify discord role
@@ -44,8 +42,6 @@ routes.post("/airdrop/discord/role/verification", airdropController.verifyDiscor
 routes.get("/airdrop/twitter/auth", airdropController.twitterAuth)
 // Twitter OAuth callback
 routes.get("/airdrop/twitter/auth/callback", airdropController.twitterCallBack);
-// Connect to Twitter
-routes.post("/airdrop/quest/twitter", airdropController.connectTwitter);
 // Follow twitter
 routes.post("/airdrop/twitter/follow", airdropController.followTwitter);
 // Tweet
